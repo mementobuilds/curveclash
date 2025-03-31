@@ -1,0 +1,99 @@
+Access to XMLHttpRequest at 'https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev:5000/socket.io/?EIO=4&transport=polling&t=lckbrasq' from origin 'https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this errorAI
+useGameStore.tsx:82 
+            
+            
+           GET https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev:5000/socket.io/?EIO=4&transport=polling&t=lckbrasq net::ERR_FAILED 502 (Bad Gateway)
+_create @ socket__io-client.js?v=15392c4c:858
+_Request @ socket__io-client.js?v=15392c4c:798
+request @ socket__io-client.js?v=15392c4c:953
+doPoll @ socket__io-client.js?v=15392c4c:775
+_poll @ socket__io-client.js?v=15392c4c:646
+doOpen @ socket__io-client.js?v=15392c4c:607
+open @ socket__io-client.js?v=15392c4c:503
+_open @ socket__io-client.js?v=15392c4c:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=15392c4c:1289
+SocketWithUpgrade @ socket__io-client.js?v=15392c4c:1633
+Socket @ socket__io-client.js?v=15392c4c:1759
+open @ socket__io-client.js?v=15392c4c:3125
+Manager @ socket__io-client.js?v=15392c4c:3057
+lookup2 @ socket__io-client.js?v=15392c4c:3393
+initializeSocket @ useGameStore.tsx:82
+initSocket @ App.tsx:19
+(anonymous) @ App.tsx:27
+commitHookEffectListMount @ chunk-WERSD76P.js?v=15392c4c:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=15392c4c:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=15392c4c:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=15392c4c:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=15392c4c:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=15392c4c:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=15392c4c:19447
+(anonymous) @ chunk-WERSD76P.js?v=15392c4c:19328
+workLoop @ chunk-WERSD76P.js?v=15392c4c:197
+flushWork @ chunk-WERSD76P.js?v=15392c4c:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=15392c4c:384Understand this errorAI
+57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev/:1 Access to XMLHttpRequest at 'https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev:5000/socket.io/?EIO=4&transport=polling&t=lclhd73z' from origin 'https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this errorAI
+useGameStore.tsx:82 
+            
+            
+           GET https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev:5000/socket.io/?EIO=4&transport=polling&t=lclhd73z net::ERR_FAILED 502 (Bad Gateway)
+_create @ socket__io-client.js?v=15392c4c:858
+_Request @ socket__io-client.js?v=15392c4c:798
+request @ socket__io-client.js?v=15392c4c:953
+doPoll @ socket__io-client.js?v=15392c4c:775
+_poll @ socket__io-client.js?v=15392c4c:646
+doOpen @ socket__io-client.js?v=15392c4c:607
+open @ socket__io-client.js?v=15392c4c:503
+_open @ socket__io-client.js?v=15392c4c:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=15392c4c:1289
+SocketWithUpgrade @ socket__io-client.js?v=15392c4c:1633
+Socket @ socket__io-client.js?v=15392c4c:1759
+open @ socket__io-client.js?v=15392c4c:3125
+(anonymous) @ socket__io-client.js?v=15392c4c:3343
+setTimeout
+reconnect @ socket__io-client.js?v=15392c4c:3337
+maybeReconnectOnOpen @ socket__io-client.js?v=15392c4c:3112
+onError @ socket__io-client.js?v=15392c4c:3141
+Emitter.emit @ socket__io-client.js?v=15392c4c:354
+_onError @ socket__io-client.js?v=15392c4c:1597
+Emitter.emit @ socket__io-client.js?v=15392c4c:354
+onError @ socket__io-client.js?v=15392c4c:495
+(anonymous) @ socket__io-client.js?v=15392c4c:778
+Emitter.emit @ socket__io-client.js?v=15392c4c:354
+_onError @ socket__io-client.js?v=15392c4c:876
+(anonymous) @ socket__io-client.js?v=15392c4c:854
+setTimeout
+xhr.onreadystatechange @ socket__io-client.js?v=15392c4c:853
+XMLHttpRequest.send
+_create @ socket__io-client.js?v=15392c4c:858
+_Request @ socket__io-client.js?v=15392c4c:798
+request @ socket__io-client.js?v=15392c4c:953
+doPoll @ socket__io-client.js?v=15392c4c:775
+_poll @ socket__io-client.js?v=15392c4c:646
+doOpen @ socket__io-client.js?v=15392c4c:607
+open @ socket__io-client.js?v=15392c4c:503
+_open @ socket__io-client.js?v=15392c4c:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=15392c4c:1289
+SocketWithUpgrade @ socket__io-client.js?v=15392c4c:1633
+Socket @ socket__io-client.js?v=15392c4c:1759
+open @ socket__io-client.js?v=15392c4c:3125
+Manager @ socket__io-client.js?v=15392c4c:3057
+lookup2 @ socket__io-client.js?v=15392c4c:3393
+initializeSocket @ useGameStore.tsx:82
+initSocket @ App.tsx:19
+(anonymous) @ App.tsx:27
+commitHookEffectListMount @ chunk-WERSD76P.js?v=15392c4c:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=15392c4c:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=15392c4c:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=15392c4c:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=15392c4c:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=15392c4c:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=15392c4c:19447
+(anonymous) @ chunk-WERSD76P.js?v=15392c4c:19328
+workLoop @ chunk-WERSD76P.js?v=15392c4c:197
+flushWork @ chunk-WERSD76P.js?v=15392c4c:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=15392c4c:384Understand this errorAI
+57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev/:1 Access to XMLHttpRequest at 'https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev:5000/socket.io/?EIO=4&transport=polling&t=lcnnxdxy' from origin 'https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this errorAI
+useGameStore.tsx:82 
+            
+            
+           GET https://57a4d1f3-f6c3-4a98-aa5b-2283c794f9e4-00-2400xzhuo4ai4.picard.replit.dev:5000/socket.io/?EIO=4&transport=polling&t=lcnnxdxy net::ERR_FAILED 502 (Bad Gateway)

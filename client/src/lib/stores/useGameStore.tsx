@@ -73,13 +73,10 @@ const useGameStore = create<GameStoreState>((set, get) => ({
     }
     
     // Connect to the socket server
-    // Using dynamic host based on current origin
-    const host = window.location.hostname;
-    const port = 5000; // Port that's forwarded
-    
+    // Use the same origin as the React app - no need to specify port
     try {
-      // Create new socket instance
-      socketInstance = io(`${window.location.protocol}//${host}:${port}`);
+      // Create new socket instance - no need to specify port
+      socketInstance = io();
       
       // Setup socket event listeners
       socketInstance.on('connect', () => {
