@@ -96,6 +96,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
     
+    // Quick match - find an available game or create a new one
+    socket.on('findGame', (data: { playerName: string, color: string }, callback) => {
+      try {
+        // Get all active games with room for more players
+        const availableGames = gameManager.getActiveGames()
+          .filter(game => game.playerCount < 6 && game.state === 'waiting');
+        
+        if (availableGames.length > 0) {
+          // Join the first available game
+          const gameToJoin = availableGames[0];
+          const { gameId, playerId } = gameManager.joinGame(socket.id, gameToJoin.id, data.playerName, data.color);
+          
+          // Join the socket to the game room
+          socket.join(gameId);
+          
+          // Send successful response
+          callback({ success: true, gameId, playerId });
+          
+          // Emit game joined event
+          socket.emit('gameJoined', { gameId, playerId });
+          
+          // Broadcast updated players list
+          io.to(gameId).emit('players', gameManager.getPlayersInGame(gameId));
+          
+          // Update game state
+          io.to(gameId).emit('gameState', { state: 'waiting', gameId });
+        } else {
+          // No available games, user needs to create a new one
+          callback({ success: false });
+        }
+      } catch (error: any) {
+        callback({ success: false, error: error.message });
+      }
+    });
+    
     // Leave game
     socket.on('leaveGame', () => {
       try {

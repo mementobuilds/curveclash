@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import Canvas from "./Canvas";
 import Controls from "./Controls";
 import ScoreBoard from "./ScoreBoard";
+import WaitingRoom from "./WaitingRoom";
 import useGameStore from "../lib/stores/useGameStore";
 import { useAudio } from "../lib/stores/useAudio";
 import { Button } from "./ui/button";
@@ -90,15 +91,12 @@ const Game = () => {
         <div className="flex-1 relative">
           <Canvas />
           
-          {(gameState === "waiting" || gameState === "countdown") && (
+          {gameState === "waiting" && <WaitingRoom />}
+          
+          {gameState === "countdown" && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70">
               <div className="text-center">
-                {gameState === "waiting" && (
-                  <div className="text-2xl">Waiting for players...</div>
-                )}
-                {gameState === "countdown" && (
-                  <div className="text-5xl font-bold text-white">Get ready!</div>
-                )}
+                <div className="text-5xl font-bold text-white">Get ready!</div>
               </div>
             </div>
           )}

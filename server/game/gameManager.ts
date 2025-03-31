@@ -391,13 +391,14 @@ export class GameManager {
   /**
    * Get all active games
    */
-  getActiveGames(): { id: string; playerCount: number }[] {
-    const activeGames: { id: string; playerCount: number }[] = [];
+  getActiveGames(): { id: string; playerCount: number; state: GameState }[] {
+    const activeGames: { id: string; playerCount: number; state: GameState }[] = [];
     
     this.games.forEach((game, id) => {
       activeGames.push({
         id,
-        playerCount: game.players.length
+        playerCount: game.players.length,
+        state: game.state
       });
     });
     

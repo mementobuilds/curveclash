@@ -196,6 +196,45 @@ const Lobby = () => {
             >
               {isJoiningGame ? "Joining..." : "Join Game"}
             </Button>
+            
+            <div className="text-center text-sm text-gray-400">- OR -</div>
+            
+            <Button
+              onClick={() => {
+                if (!playerName.trim()) {
+                  toast.error("Please enter a player name");
+                  return;
+                }
+                
+                // Set local player
+                setLocalPlayer({
+                  id: '',
+                  name: playerName,
+                  color: selectedColor,
+                  x: 0,
+                  y: 0,
+                  angle: 0,
+                  score: 0,
+                  isAlive: true,
+                  points: []
+                });
+                
+                // Auto-join the first available game
+                socket?.emit('findGame', { playerName, color: selectedColor }, (response: { success: boolean, gameId?: string, error?: string }) => {
+                  if (response.success && response.gameId) {
+                    toast.success(`Joined game ${response.gameId}`);
+                    setGameState("waiting");
+                  } else {
+                    // If no games available, create a new one
+                    handleCreateGame();
+                  }
+                });
+              }}
+              disabled={!playerName}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              Quick Match
+            </Button>
           </div>
         </div>
       </div>
