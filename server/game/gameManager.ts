@@ -107,6 +107,11 @@ export class GameManager {
       throw new Error("Need at least 2 players to start the game");
     }
     
+    // Reset all player directions to 'none' when starting a new game
+    game.players.forEach(player => {
+      game.playerManager.setPlayerDirection(player.id, 'none');
+    });
+    
     // Begin countdown
     game.state = "countdown";
     this.io.to(gameId).emit('gameState', { state: game.state });
@@ -151,6 +156,11 @@ export class GameManager {
       player.angle = position.angle;
       player.isAlive = true;
       player.points = [{ x: position.x, y: position.y }];
+      
+      // Reset all player directions to 'none' to avoid automatic turning
+      game.playerManager.setPlayerDirection(player.id, 'none');
+      
+      console.log(`Reset player ${player.name} (${player.id}) direction to 'none'`);
     });
     
     // Update the game

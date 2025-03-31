@@ -101,7 +101,14 @@ const useGameStore = create<GameStoreState>((set, get) => ({
       });
       
       socketInstance.on('gameState', (data: { state: GameState, gameId?: string }) => {
-        set({ gameState: data.state });
+        // Only update if the state is actually different or defined
+        if (data.state) {
+          console.log(`Game state changing to: ${data.state}`);
+          set({ gameState: data.state });
+        } else {
+          console.warn(`Received undefined game state, ignoring`);
+        }
+        
         if (data.gameId) {
           set({ gameId: data.gameId });
         }

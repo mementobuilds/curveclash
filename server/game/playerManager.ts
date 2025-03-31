@@ -85,8 +85,6 @@ export class PlayerManager {
    * Set a player's direction
    */
   setPlayerDirection(playerId: string, direction: 'left' | 'right' | 'none'): void {
-    console.log(`PlayerManager: Setting direction for player ${playerId} to ${direction}`);
-    
     // Check if player exists
     const player = this.getPlayer(playerId);
     if (!player) {
@@ -94,11 +92,15 @@ export class PlayerManager {
       return;
     }
     
-    console.log(`Player found: ${player.name}, current direction: ${this.playerDirections[playerId] || 'none'}`);
+    const currentDirection = this.playerDirections[playerId] || 'none';
+    
+    // Only log if direction is actually changing
+    if (currentDirection !== direction) {
+      console.log(`PlayerManager: Player ${player.name} (${playerId}) changing direction: ${currentDirection} -> ${direction}`);
+    }
     
     // Update the direction
     this.playerDirections[playerId] = direction;
-    console.log(`Direction updated successfully to ${direction}`);
   }
 
   /**

@@ -184,6 +184,12 @@ function App() {
   
   // Update playing state
   useEffect(() => {
+    // Guard against undefined gameState which can happen during transitions
+    if (!gameState) {
+      console.log('Skipping controls update - gameState is undefined');
+      return;
+    }
+    
     const isPlaying = gameState === 'playing' || gameState === 'countdown';
     const canControl = isPlaying && !!localPlayer && !!socket;
     
