@@ -173,8 +173,8 @@ const useGameStore = create<GameStoreState>((set, get) => ({
   updatePlayerDirection: (direction) => {
     const { socket, localPlayer } = get();
     if (socket && localPlayer) {
-      // Direction is sent via sockets in the keypress handlers
-      // This method is primarily for local state updates if needed
+      // Send direction to server
+      socket.emit('changeDirection', { direction });
     }
   },
   

@@ -141,6 +141,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     // Disconnect handling
+    // Change player direction
+    socket.on('changeDirection', (data: { direction: 'left' | 'right' | 'none' }) => {
+      try {
+        gameManager.changePlayerDirection(socket.id, data.direction);
+      } catch (error: any) {
+        console.error('Error changing direction:', error.message);
+        socket.emit('error', error.message);
+      }
+    });
+    
     socket.on('disconnect', () => {
       console.log(`Client disconnected: ${socket.id}`);
       

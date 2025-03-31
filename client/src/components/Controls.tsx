@@ -1,14 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useGameStore from '../lib/stores/useGameStore';
+import { useIsMobile } from "../hooks/use-is-mobile";
+import { Button } from './ui/button';
 
 const Controls = () => {
-  const { localPlayer, socket, gameState } = useGameStore();
+  const { localPlayer, socket, gameState, updatePlayerDirection } = useGameStore();
+  const isMobile = useIsMobile();
+  const [activeDirection, setActiveDirection] = useState<'left' | 'right' | 'none'>('none');
+
+  // Handle direction changes for both mobile and desktop
+  const handleDirectionChange = (direction: 'left' | 'right' | 'none') => {
+    if (!socket || !localPlayer || gameState !== 'playing') return;
+    
+    setActiveDirection(direction);
+    updatePlayerDirection(direction);
+  };
 
   // Define touch controls for mobile devices
   useEffect(() => {
-    if (!socket || !localPlayer || gameState !== 'playing') return;
+    if (!socket || !localPlayer || gameState !== 'playing' || isMobile) return;
 
-    // Touch controls for mobile devices
+    // Touch controls for mobile devices (screen touch areas)
     const handleTouchStart = (event: TouchEvent) => {
       const touchX = event.touches[0].clientX;
       const windowWidth = window.innerWidth;
@@ -16,15 +28,15 @@ const Controls = () => {
 
       if (touchX < middleScreen) {
         // Left side of screen - turn left
-        socket.emit('changeDirection', { direction: 'left' });
+        handleDirectionChange('left');
       } else {
         // Right side of screen - turn right
-        socket.emit('changeDirection', { direction: 'right' });
+        handleDirectionChange('right');
       }
     };
 
     const handleTouchEnd = () => {
-      socket.emit('changeDirection', { direction: 'none' });
+      handleDirectionChange('none');
     };
 
     document.addEventListener('touchstart', handleTouchStart);
@@ -34,7 +46,7 @@ const Controls = () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [localPlayer, socket, gameState]);
+  }, [localPlayer, socket, gameState, isMobile]);
 
   return (
     <div className="mt-4 p-4 bg-gray-800 rounded-lg">
@@ -69,6 +81,34 @@ const Controls = () => {
           </ul>
         </div>
       </div>
+      
+      {/* Mobile control buttons */}
+      {isMobile && gameState === 'playing' && (
+        <div className="mt-4">
+          <div className="flex justify-center gap-8">
+            <Button
+              className={`w-24 h-16 text-lg ${activeDirection === 'left' ? 'bg-blue-600' : 'bg-blue-500'}`}
+              onTouchStart={() => handleDirectionChange('left')}
+              onTouchEnd={() => handleDirectionChange('none')}
+              onMouseDown={() => handleDirectionChange('left')}
+              onMouseUp={() => handleDirectionChange('none')}
+              onMouseLeave={() => activeDirection === 'left' && handleDirectionChange('none')}
+            >
+              ← Left
+            </Button>
+            <Button
+              className={`w-24 h-16 text-lg ${activeDirection === 'right' ? 'bg-blue-600' : 'bg-blue-500'}`}
+              onTouchStart={() => handleDirectionChange('right')}
+              onTouchEnd={() => handleDirectionChange('none')}
+              onMouseDown={() => handleDirectionChange('right')}
+              onMouseUp={() => handleDirectionChange('none')}
+              onMouseLeave={() => activeDirection === 'right' && handleDirectionChange('none')}
+            >
+              Right →
+            </Button>
+          </div>
+        </div>
+      )}
       
       <div className="mt-8 text-sm text-gray-400">
         <p>Avoid hitting walls, your own line, and other players' lines!</p>

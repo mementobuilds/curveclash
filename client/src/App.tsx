@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
+import MobileControls from "./components/MobileControls";
 import useGameStore from "./lib/stores/useGameStore";
 import "@fontsource/inter";
 import "./index.css";
@@ -43,6 +44,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col bg-black text-white">
         {gameState === "lobby" ? <Lobby /> : <Game />}
+        <MobileControls />
       </div>
       <Toaster position="top-right" />
     </QueryClientProvider>
