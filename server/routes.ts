@@ -136,8 +136,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log(`Player ${socket.id} changing direction to: ${data.direction}`);
         gameManager.changePlayerDirection(socket.id, data.direction);
+        
+        // Send confirmation back to client for debugging
+        socket.emit('directionChanged', { 
+          direction: data.direction, 
+          success: true,
+          time: new Date().toISOString()
+        });
       } catch (error: any) {
         console.error('Error changing direction:', error.message);
+        socket.emit('directionChanged', { 
+          direction: data.direction, 
+          success: false, 
+          error: error.message,
+          time: new Date().toISOString()
+        });
         socket.emit('error', error.message);
       }
     });

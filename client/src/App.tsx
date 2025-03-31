@@ -54,7 +54,18 @@ class GlobalControlsManager {
     
     try {
       // Emit the changeDirection event
+      console.log(`Socket ID before sending: ${this.socket.id}`);
       this.socket.emit('changeDirection', { direction });
+      
+      // Debug information
+      console.log(`Direction ${direction} sent successfully to socket ${this.socket.id}`);
+      
+      // Also update the game store directly (in case socket fails)
+      // We need to access this via the window since we can't import it directly in a class
+      const updateFn = (window as any).updateStoreDirection;
+      if (typeof updateFn === 'function') {
+        updateFn(direction);
+      }
     } catch (error) {
       console.error('GlobalControlsManager: Error sending direction:', error);
     }
@@ -132,12 +143,24 @@ class GlobalControlsManager {
 // Singleton instance
 const controlsManager = new GlobalControlsManager();
 
+// TypeScript declarations
+type DirectionType = 'left' | 'right' | 'none';
+
+// Add to window for TypeScript (simpler approach)
+declare global {
+  interface Window {
+    controlsManager: any; // Use any to avoid circular reference
+    updateStoreDirection?: (direction: DirectionType) => void;
+  }
+}
+
 function App() {
   const { 
     gameState, 
     initializeSocket, 
     socket, 
-    localPlayer
+    localPlayer,
+    updatePlayerDirection
   } = useGameStore();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -154,9 +177,22 @@ function App() {
     controlsManager.setPlaying(isPlaying && !!localPlayer && !!socket);
   }, [gameState, localPlayer, socket]);
   
-  // Expose the controls manager for other components
-  // @ts-ignore - add to window for debugging and for mobile controls to access
-  window.controlsManager = controlsManager;
+  // Expose functions to the window
+  useEffect(() => {
+    // Expose the controls manager for mobile controls to access
+    window.controlsManager = controlsManager;
+    
+    // Expose a function to update direction through the store
+    window.updateStoreDirection = (direction: 'left' | 'right' | 'none') => {
+      console.log(`Updating store direction: ${direction}`);
+      updatePlayerDirection(direction);
+    };
+    
+    return () => {
+      // Cleanup - use type assertion to handle optional property
+      window.updateStoreDirection = undefined;
+    };
+  }, [updatePlayerDirection]);
 
   useEffect(() => {
     // Initialize the socket connection

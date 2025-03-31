@@ -2,15 +2,9 @@ import { useState, useEffect } from 'react';
 import useGameStore from '../lib/stores/useGameStore';
 import { useIsMobile } from "../hooks/use-is-mobile";
 
-// Typings for global controls manager
-interface GlobalControlsManager {
+// Typings for global controls manager (simplified)
+interface IControlsManager {
   handleTouchDirection(direction: 'left' | 'right' | 'none'): void;
-}
-
-declare global {
-  interface Window {
-    controlsManager: GlobalControlsManager;
-  }
 }
 
 const MobileControls = () => {
