@@ -360,9 +360,16 @@ export class GameManager {
         return;
       }
       
-      // If we're in countdown, just log a special message
+      // If we're in countdown, give more detailed feedback
       if (game.state === 'countdown') {
-        console.log(`Game in countdown, accepting direction: ${direction}`);
+        console.log(`🎮 COUNTDOWN CONTROLS: Player ${playerId} using ${direction} direction`);
+        
+        // Send an additional debug message back to the client
+        this.io.to(socketId).emit('controlsDebug', {
+          message: `Server received ${direction} during countdown`,
+          playerId,
+          direction
+        });
       }
       
       console.log(`Setting direction for player ${playerId} to ${direction}`);

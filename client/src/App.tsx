@@ -37,6 +37,11 @@ class GlobalControlsManager {
     console.log(`GlobalControlsManager: Playing state set to ${playing}`);
   }
   
+  // Public getter for playing state
+  isPlaying(): boolean {
+    return this.playing;
+  }
+  
   // Public method to send a direction
   sendDirection(direction: 'left' | 'right' | 'none') {
     if (!this.socket) {
@@ -77,7 +82,10 @@ class GlobalControlsManager {
     this.keyStates[e.key.toLowerCase()] = true;
     
     // Check if we can process input
-    if (!this.socket || !this.playing) return;
+    if (!this.socket || !this.playing) {
+      console.log(`GlobalControlsManager: Key ${e.key} ignored - socket: ${!!this.socket}, playing: ${this.playing}`);
+      return;
+    }
     
     const key = e.key.toLowerCase();
     console.log(`GlobalControlsManager: Key down: ${key}`);
@@ -97,7 +105,10 @@ class GlobalControlsManager {
     this.keyStates[e.key.toLowerCase()] = false;
     
     // Check if we can process input
-    if (!this.socket || !this.playing) return;
+    if (!this.socket || !this.playing) {
+      console.log(`GlobalControlsManager: Key Up ${e.key} ignored - socket: ${!!this.socket}, playing: ${this.playing}`);
+      return;
+    }
     
     const key = e.key.toLowerCase();
     console.log(`GlobalControlsManager: Key up: ${key}`);
@@ -124,11 +135,11 @@ class GlobalControlsManager {
   // Public method for when touch events come in from MobileControls
   handleTouchDirection(direction: 'left' | 'right' | 'none') {
     if (!this.socket || !this.playing) {
-      console.log(`GlobalControlsManager: Ignoring touch direction (socket or playing not ready)`);
+      console.log(`GlobalControlsManager: Ignoring touch direction ${direction} - socket: ${!!this.socket}, playing: ${this.playing}`);
       return;
     }
     
-    console.log(`GlobalControlsManager: Touch direction: ${direction}`);
+    console.log(`GlobalControlsManager: Processing touch direction: ${direction}`);
     this.sendDirection(direction);
   }
   
@@ -174,7 +185,16 @@ function App() {
   // Update playing state
   useEffect(() => {
     const isPlaying = gameState === 'playing' || gameState === 'countdown';
-    controlsManager.setPlaying(isPlaying && !!localPlayer && !!socket);
+    const canControl = isPlaying && !!localPlayer && !!socket;
+    
+    // Set the playing state and log it only once
+    if (canControl) {
+      console.log(`Controls ENABLED for game state: ${gameState}`);
+      controlsManager.setPlaying(true);
+    } else {
+      console.log(`Controls DISABLED for game state: ${gameState}`);
+      controlsManager.setPlaying(false);
+    }
   }, [gameState, localPlayer, socket]);
   
   // Expose functions to the window

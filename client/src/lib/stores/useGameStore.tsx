@@ -124,6 +124,11 @@ const useGameStore = create<GameStoreState>((set, get) => ({
         }
       });
       
+      // Add debug listener for countdown controls
+      socketInstance.on('controlsDebug', (data: { message: string, playerId: string, direction: string }) => {
+        console.log(`CONTROL DEBUG: ${data.message} - Player: ${data.playerId}, Direction: ${data.direction}`);
+      });
+      
       // Set the socket at the end after all event listeners are attached
       set({ socket: socketInstance });
     } catch (error) {
