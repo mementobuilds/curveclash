@@ -28,7 +28,7 @@ const MobileControls = () => {
   
   // Handle full-screen touch events
   useEffect(() => {
-    if (!isMobile || gameState !== 'playing') return;
+    if (!isMobile || (gameState !== 'playing' && gameState !== 'countdown')) return;
     
     // Touch handler for the entire screen
     const handleTouchStart = (event: TouchEvent) => {
@@ -66,8 +66,8 @@ const MobileControls = () => {
     };
   }, [gameState, isMobile]);
   
-  // If not mobile or game is not playing, don't show the controls
-  if (!isMobile || gameState !== 'playing') {
+  // If not mobile or game is not in playing/countdown state, don't show the controls
+  if (!isMobile || (gameState !== 'playing' && gameState !== 'countdown')) {
     return null;
   }
 

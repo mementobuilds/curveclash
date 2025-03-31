@@ -183,10 +183,14 @@ export class GameManager {
       return;
     }
     
-    // Skip if the game is not in playing state
-    if (game.state !== "playing") {
+    // Only process player movements in playing or countdown states
+    if (game.state !== "playing" && game.state !== "countdown") {
       return;
     }
+    
+    // If we're in countdown, we'll still respond to direction changes but won't
+    // actually move players or check for collisions - this makes controls feel responsive
+    const isCountdown = game.state === "countdown";
     
     // Increment frame counter
     game.frameCount++;
@@ -207,64 +211,70 @@ export class GameManager {
         player.angle += TURN_SPEED;
       }
       
-      // Calculate new position
-      const newX = player.x + Math.cos(player.angle) * GAME_SPEED;
-      const newY = player.y + Math.sin(player.angle) * GAME_SPEED;
-      
-      // Check if we should create a gap (hole) in the line
-      // Initial delay before gaps start appearing
-      const shouldCreateGap = 
-        game.frameCount > INITIAL_HOLE_PERIOD && 
-        game.frameCount % GAP_FREQUENCY < GAP_DURATION;
-      
-      // If creating a gap, use special coordinates (-1, -1) to indicate a gap
-      if (shouldCreateGap) {
-        player.points.push({ x: -1, y: -1 });
-      } else {
-        // Add the new point to the player's trail
-        player.points.push({ x: newX, y: newY });
-      }
-      
-      // Update player position
-      player.x = newX;
-      player.y = newY;
-    });
-    
-    // Check for collisions
-    activePlayers = checkCollisions(activePlayers, CANVAS_WIDTH, CANVAS_HEIGHT);
-    
-    // Update player alive status in the original array
-    players.forEach(player => {
-      const activePlayer = activePlayers.find(p => p.id === player.id);
-      player.isAlive = !!activePlayer;
-    });
-    
-    // Check if the round is over (0 or 1 player left)
-    if (activePlayers.length <= 1) {
-      // Round is over
-      
-      // If one player is left, they win the round
-      if (activePlayers.length === 1) {
-        const winnerId = activePlayers[0].id;
+      // Only perform actual movement if we're in playing state, not countdown
+      if (!isCountdown) {
+        // Calculate new position
+        const newX = player.x + Math.cos(player.angle) * GAME_SPEED;
+        const newY = player.y + Math.sin(player.angle) * GAME_SPEED;
         
-        // Update score
-        const winnerIndex = players.findIndex(p => p.id === winnerId);
-        if (winnerIndex !== -1) {
-          players[winnerIndex].score += 1;
-          game.roundWinner = winnerId;
+        // Check if we should create a gap (hole) in the line
+        // Initial delay before gaps start appearing
+        const shouldCreateGap = 
+          game.frameCount > INITIAL_HOLE_PERIOD && 
+          game.frameCount % GAP_FREQUENCY < GAP_DURATION;
+        
+        // If creating a gap, use special coordinates (-1, -1) to indicate a gap
+        if (shouldCreateGap) {
+          player.points.push({ x: -1, y: -1 });
+        } else {
+          // Add the new point to the player's trail
+          player.points.push({ x: newX, y: newY });
+        }
+        
+        // Update player position
+        player.x = newX;
+        player.y = newY;
+      }
+    });
+    
+    // Skip collision checks and game over logic during countdown
+    if (!isCountdown) {
+      // Check for collisions
+      activePlayers = checkCollisions(activePlayers, CANVAS_WIDTH, CANVAS_HEIGHT);
+      
+      // Update player alive status in the original array
+      players.forEach(player => {
+        const activePlayer = activePlayers.find(p => p.id === player.id);
+        player.isAlive = !!activePlayer;
+      });
+      
+      // Check if the round is over (0 or 1 player left)
+      if (activePlayers.length <= 1) {
+        // Round is over
+        
+        // If one player is left, they win the round
+        if (activePlayers.length === 1) {
+          const winnerId = activePlayers[0].id;
           
-          // Notify clients of the round winner
-          this.io.to(gameId).emit('roundWinner', { playerId: winnerId });
-          
-          // Check if we have a game winner
-          if (players[winnerIndex].score >= game.winningScore) {
-            game.gameWinner = winnerId;
+          // Update score
+          const winnerIndex = players.findIndex(p => p.id === winnerId);
+          if (winnerIndex !== -1) {
+            players[winnerIndex].score += 1;
+            game.roundWinner = winnerId;
+            
+            // Notify clients of the round winner
+            this.io.to(gameId).emit('roundWinner', { playerId: winnerId });
+            
+            // Check if we have a game winner
+            if (players[winnerIndex].score >= game.winningScore) {
+              game.gameWinner = winnerId;
+            }
           }
         }
+        
+        // End the round
+        this.endRound(gameId);
       }
-      
-      // End the round
-      this.endRound(gameId);
     }
     
     // Send the updated game state to clients
@@ -339,15 +349,15 @@ export class GameManager {
         throw new Error("Game not found");
       }
       
-      // Check if the game is in playing state
-      if (game.state !== 'playing') {
-        console.warn(`Game ${gameId} is not in playing state (current: ${game.state}), direction change ignored`);
-        // Still accept the direction if in countdown mode, to make controls feel responsive
-        if (game.state === 'countdown') {
-          console.log(`Game in countdown, storing direction for when game starts`);
-          game.playerManager.setPlayerDirection(playerId, direction);
-        }
+      // Allow direction changes in both 'playing' and 'countdown' states
+      if (game.state !== 'playing' && game.state !== 'countdown') {
+        console.warn(`Game ${gameId} is not in playing/countdown state (current: ${game.state}), direction change ignored`);
         return;
+      }
+      
+      // If we're in countdown, just log a special message
+      if (game.state === 'countdown') {
+        console.log(`Game in countdown, accepting direction: ${direction}`);
       }
       
       console.log(`Setting direction for player ${playerId} to ${direction}`);
