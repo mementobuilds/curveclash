@@ -15,8 +15,8 @@ const Canvas = () => {
   } = useGameStore();
 
   useEffect(() => {
-    // Reset canvas when game state changes to 'playing'
-    if (gameState === 'playing') {
+    // Reset canvas when game state changes to 'playing' or 'countdown'
+    if (gameState === 'playing' || gameState === 'countdown') {
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -31,14 +31,21 @@ const Canvas = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleGameState = (gameState: any) => {
+    const handleGameState = (gameStateData: any) => {
       // Update the local game state with the server's game state
-      if (gameState.players) {
-        for (const player of gameState.players) {
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
+      if (gameStateData.players) {
+        // First clear the canvas to avoid trail build-up during countdown
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Clear the canvas before redrawing
+            clearCanvas(ctx);
+            
+            // Draw all players
+            for (const player of gameStateData.players) {
+              // Draw the player regardless of game state (including countdown)
+              // This ensures we see direction changes during countdown
               drawPlayer(ctx, player);
             }
           }

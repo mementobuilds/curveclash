@@ -211,12 +211,17 @@ export class GameManager {
         player.angle += TURN_SPEED;
       }
       
-      // Only perform actual movement if we're in playing state, not countdown
-      if (!isCountdown) {
-        // Calculate new position
-        const newX = player.x + Math.cos(player.angle) * GAME_SPEED;
-        const newY = player.y + Math.sin(player.angle) * GAME_SPEED;
-        
+      // Calculate new position regardless of state
+      const newX = player.x + Math.cos(player.angle) * GAME_SPEED;
+      const newY = player.y + Math.sin(player.angle) * GAME_SPEED;
+      
+      if (isCountdown) {
+        // In countdown state, update the position but don't add to points array
+        // This makes the angle change visible without leaving a trail
+        player.x = newX;
+        player.y = newY;
+      } else {
+        // In playing state, add to points array and handle gaps
         // Check if we should create a gap (hole) in the line
         // Initial delay before gaps start appearing
         const shouldCreateGap = 
