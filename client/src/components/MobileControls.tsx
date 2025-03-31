@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useGameStore from '../lib/stores/useGameStore';
 import { useIsMobile } from "../hooks/use-is-mobile";
 
@@ -7,25 +7,79 @@ const MobileControls = () => {
   const isMobile = useIsMobile();
   const [activeDirection, setActiveDirection] = useState<'left' | 'right' | 'none'>('none');
 
+  // Handle direction changes
+  const handleDirectionChange = (direction: 'left' | 'right' | 'none') => {
+    if (!socket || !localPlayer) {
+      console.log('Cannot change direction: socket or localPlayer not available');
+      return;
+    }
+    
+    console.log(`MobileControls: Sending direction change: ${direction}`);
+    setActiveDirection(direction);
+    
+    // Send through store
+    updatePlayerDirection(direction);
+    
+    // Also send the direction directly via socket as a backup
+    socket.emit('changeDirection', { direction });
+  };
+  
+  // Add whole screen touch controls as a fallback
+  useEffect(() => {
+    if (!socket || !localPlayer || gameState !== 'playing' || !isMobile) return;
+    
+    // Touch handler for the entire screen
+    const handleTouchStart = (event: TouchEvent) => {
+      const touchX = event.touches[0].clientX;
+      const windowWidth = window.innerWidth;
+      const middleScreen = windowWidth / 2;
+      
+      console.log(`MobileControls: Screen touch at x=${touchX}, middle=${middleScreen}`);
+      
+      if (touchX < middleScreen) {
+        // Left side of screen - turn left
+        handleDirectionChange('left');
+      } else {
+        // Right side of screen - turn right
+        handleDirectionChange('right');
+      }
+      
+      // Prevent default to avoid scrolling
+      event.preventDefault();
+    };
+    
+    const handleTouchEnd = () => {
+      console.log('MobileControls: Screen touch ended');
+      handleDirectionChange('none');
+    };
+    
+    // Add global touch handlers
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [socket, localPlayer, gameState, isMobile]);
+  
   // If not mobile or game is not playing, don't show the controls
   if (!isMobile || gameState !== 'playing') {
     return null;
   }
 
-  // Handle direction changes
-  const handleDirectionChange = (direction: 'left' | 'right' | 'none') => {
-    if (!socket || !localPlayer) return;
-    
-    setActiveDirection(direction);
-    updatePlayerDirection(direction);
-  };
-
   return (
     <div className="mobile-controls">
       <button 
-        className={`control-button control-button-left ${activeDirection === 'left' ? 'opacity-100' : ''}`}
-        onTouchStart={() => handleDirectionChange('left')}
-        onTouchEnd={() => handleDirectionChange('none')}
+        className={`control-button control-button-left ${activeDirection === 'left' ? 'bg-blue-600' : 'bg-gray-800'}`}
+        onTouchStart={(e) => {
+          e.stopPropagation(); // Stop event bubbling to prevent document handler
+          handleDirectionChange('left');
+        }}
+        onTouchEnd={(e) => {
+          e.stopPropagation(); // Stop event bubbling to prevent document handler
+          handleDirectionChange('none');
+        }}
         onMouseDown={() => handleDirectionChange('left')}
         onMouseUp={() => handleDirectionChange('none')}
         onMouseLeave={() => activeDirection === 'left' && handleDirectionChange('none')}
@@ -34,9 +88,15 @@ const MobileControls = () => {
       </button>
       
       <button 
-        className={`control-button control-button-right ${activeDirection === 'right' ? 'opacity-100' : ''}`}
-        onTouchStart={() => handleDirectionChange('right')}
-        onTouchEnd={() => handleDirectionChange('none')}
+        className={`control-button control-button-right ${activeDirection === 'right' ? 'bg-blue-600' : 'bg-gray-800'}`}
+        onTouchStart={(e) => {
+          e.stopPropagation(); // Stop event bubbling to prevent document handler
+          handleDirectionChange('right');
+        }}
+        onTouchEnd={(e) => {
+          e.stopPropagation(); // Stop event bubbling to prevent document handler
+          handleDirectionChange('none');
+        }}
         onMouseDown={() => handleDirectionChange('right')}
         onMouseUp={() => handleDirectionChange('none')}
         onMouseLeave={() => activeDirection === 'right' && handleDirectionChange('none')}

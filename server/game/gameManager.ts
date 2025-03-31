@@ -310,26 +310,75 @@ export class GameManager {
    * Change a player's direction
    */
   changePlayerDirection(socketId: string, direction: 'left' | 'right' | 'none'): void {
-    // Get the player ID
-    const playerId = this.socketToPlayer.get(socketId);
-    if (!playerId) {
-      throw new Error("Player not found");
-    }
+    console.log(`GameManager: Changing direction for socket ${socketId} to ${direction}`);
     
-    // Get the game ID
-    const gameId = this.playerToGame.get(playerId);
-    if (!gameId) {
-      throw new Error("Game not found for player");
+    try {
+      // Get the player ID
+      const playerId = this.socketToPlayer.get(socketId);
+      if (!playerId) {
+        console.error(`No player found for socket ID: ${socketId}`);
+        console.error(`Current socket-player mappings: ${JSON.stringify(Array.from(this.socketToPlayer.entries()))}`);
+        throw new Error("Player not found for this socket");
+      }
+      console.log(`Found player: ${playerId}`);
+      
+      // Get the game ID
+      const gameId = this.playerToGame.get(playerId);
+      if (!gameId) {
+        console.error(`No game found for player: ${playerId}`);
+        console.error(`Current player-game mappings: ${JSON.stringify(Array.from(this.playerToGame.entries()))}`);
+        throw new Error("Game not found for player");
+      }
+      console.log(`Found game: ${gameId}`);
+      
+      // Get the game
+      const game = this.games.get(gameId);
+      if (!game) {
+        console.error(`Game not found with ID: ${gameId}`);
+        console.error(`Current games: ${JSON.stringify(Array.from(this.games.keys()))}`);
+        throw new Error("Game not found");
+      }
+      
+      // Check if the game is in playing state
+      if (game.state !== 'playing') {
+        console.warn(`Game ${gameId} is not in playing state (current: ${game.state}), direction change ignored`);
+        // Still accept the direction if in countdown mode, to make controls feel responsive
+        if (game.state === 'countdown') {
+          console.log(`Game in countdown, storing direction for when game starts`);
+          game.playerManager.setPlayerDirection(playerId, direction);
+        }
+        return;
+      }
+      
+      console.log(`Setting direction for player ${playerId} to ${direction}`);
+      
+      // Get the player from the player manager
+      const player = game.playerManager.getPlayer(playerId);
+      if (!player) {
+        console.error(`Player ${playerId} not found in game ${gameId}`);
+        throw new Error("Player not found in game");
+      }
+      
+      // Make sure the player is alive
+      if (!player.isAlive) {
+        console.warn(`Player ${playerId} is not alive, direction change ignored`);
+        return;
+      }
+      
+      // Update the player's direction
+      game.playerManager.setPlayerDirection(playerId, direction);
+      
+      // Emit a debug event to confirm the direction was changed
+      this.io.to(socketId).emit('directionChanged', { direction, success: true });
+    } catch (error) {
+      console.error('Error in changePlayerDirection:', error);
+      // Send an error response back to the client
+      this.io.to(socketId).emit('directionChanged', { 
+        direction, 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
-    
-    // Get the game
-    const game = this.games.get(gameId);
-    if (!game) {
-      throw new Error("Game not found");
-    }
-    
-    // Update the player's direction
-    game.playerManager.setPlayerDirection(playerId, direction);
   }
 
   /**

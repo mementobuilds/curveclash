@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import useGameStore from '../lib/stores/useGameStore';
 import { useIsMobile } from "../hooks/use-is-mobile";
 import { Button } from './ui/button';
@@ -9,44 +9,85 @@ const Controls = () => {
   const [activeDirection, setActiveDirection] = useState<'left' | 'right' | 'none'>('none');
 
   // Handle direction changes for both mobile and desktop
-  const handleDirectionChange = (direction: 'left' | 'right' | 'none') => {
-    if (!socket || !localPlayer || gameState !== 'playing') return;
+  // Use useCallback to memoize the function so it doesn't change on every render
+  const handleDirectionChange = useCallback((direction: 'left' | 'right' | 'none') => {
+    console.log(`Controls component: Handling direction change to: ${direction}`);
     
+    // Update UI state regardless of actual game state to make controls feel responsive
     setActiveDirection(direction);
-    updatePlayerDirection(direction);
-  };
+    
+    if (!socket || !localPlayer) {
+      console.error('Cannot change direction: socket or localPlayer not available');
+      return;
+    }
+    
+    // Allow control in both playing and countdown states
+    if (gameState !== 'playing' && gameState !== 'countdown') {
+      console.log(`Game not in playing/countdown state (current: ${gameState}), direction change ignored`);
+      return;
+    }
+    
+    console.log(`Controls component: Sending direction change: ${direction}`);
+    
+    // Try both methods to maximize chance of success
+    try {
+      // 1. Use the store method
+      updatePlayerDirection(direction);
+      
+      // 2. Direct socket emission as backup
+      socket.emit('changeDirection', { direction });
+      
+      console.log(`Controls component: Direction successfully sent: ${direction}`);
+    } catch (error) {
+      console.error('Failed to update direction:', error);
+    }
+  }, [socket, localPlayer, gameState, updatePlayerDirection]);
 
-  // Define touch controls for mobile devices
+  // Keyboard controls for desktop
   useEffect(() => {
     if (!socket || !localPlayer || gameState !== 'playing' || isMobile) return;
-
-    // Touch controls for mobile devices (screen touch areas)
-    const handleTouchStart = (event: TouchEvent) => {
-      const touchX = event.touches[0].clientX;
-      const windowWidth = window.innerWidth;
-      const middleScreen = windowWidth / 2;
-
-      if (touchX < middleScreen) {
-        // Left side of screen - turn left
+    
+    console.log('Controls: Setting up keyboard event listeners');
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      console.log('Controls.tsx: Key down event fired:', e.key);
+      
+      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+        console.log('Controls.tsx: Left key detected');
         handleDirectionChange('left');
-      } else {
-        // Right side of screen - turn right
+      } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+        console.log('Controls.tsx: Right key detected');
         handleDirectionChange('right');
       }
     };
-
-    const handleTouchEnd = () => {
-      handleDirectionChange('none');
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      console.log('Controls.tsx: Key up event fired:', e.key);
+      
+      if (
+        e.key === 'ArrowLeft' || 
+        e.key.toLowerCase() === 'a' || 
+        e.key === 'ArrowRight' || 
+        e.key.toLowerCase() === 'd'
+      ) {
+        console.log('Controls.tsx: Direction key released');
+        handleDirectionChange('none');
+      }
     };
-
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchend', handleTouchEnd);
-
+    
+    // Add event listeners
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    console.log('Controls: Keyboard event listeners added');
+    
+    // Cleanup on unmount
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      console.log('Controls: Keyboard event listeners removed');
     };
-  }, [localPlayer, socket, gameState, isMobile]);
+  }, [socket, localPlayer, gameState, isMobile, handleDirectionChange]);
 
   return (
     <div className="mt-4 p-4 bg-gray-800 rounded-lg">

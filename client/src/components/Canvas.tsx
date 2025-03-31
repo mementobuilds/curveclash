@@ -67,41 +67,9 @@ const Canvas = () => {
   }, [socket, clearPlayers]);
 
   // Handle keyboard inputs
-  useEffect(() => {
-    if (!socket || !localPlayer) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (gameState !== 'playing') return;
-
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        updatePlayerDirection('left');
-        socket.emit('changeDirection', { direction: 'left' });
-      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        updatePlayerDirection('right');
-        socket.emit('changeDirection', { direction: 'right' });
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (gameState !== 'playing') return;
-
-      if (
-        (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') ||
-        (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D')
-      ) {
-        updatePlayerDirection('none');
-        socket.emit('changeDirection', { direction: 'none' });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [gameState, localPlayer, socket, updatePlayerDirection]);
+  // Previously we had keyboard event handlers here, but they have been moved to
+  // App.tsx and Controls.tsx to avoid multiple handlers competing for the same events.
+  // This helps ensure that keyboard controls work consistently.
 
   return (
     <canvas

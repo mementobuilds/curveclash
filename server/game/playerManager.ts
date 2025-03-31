@@ -59,11 +59,12 @@ export class PlayerManager {
     delete this.playerDirections[playerId];
     
     // Remove socket to player mapping
-    for (const [socketId, pid] of this.socketToPlayer.entries()) {
+    // Use Array.from to convert the entries to a regular array, avoiding MapIterator issues
+    Array.from(this.socketToPlayer.entries()).forEach(([socketId, pid]) => {
       if (pid === playerId) {
         this.socketToPlayer.delete(socketId);
       }
-    }
+    });
   }
 
   /**
@@ -84,7 +85,20 @@ export class PlayerManager {
    * Set a player's direction
    */
   setPlayerDirection(playerId: string, direction: 'left' | 'right' | 'none'): void {
+    console.log(`PlayerManager: Setting direction for player ${playerId} to ${direction}`);
+    
+    // Check if player exists
+    const player = this.getPlayer(playerId);
+    if (!player) {
+      console.error(`Cannot set direction: Player ${playerId} not found`);
+      return;
+    }
+    
+    console.log(`Player found: ${player.name}, current direction: ${this.playerDirections[playerId] || 'none'}`);
+    
+    // Update the direction
     this.playerDirections[playerId] = direction;
+    console.log(`Direction updated successfully to ${direction}`);
   }
 
   /**

@@ -87,15 +87,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
     
-    // Change player direction
-    socket.on('changeDirection', (data: { direction: 'left' | 'right' | 'none' }) => {
-      try {
-        gameManager.changePlayerDirection(socket.id, data.direction);
-      } catch (error: any) {
-        socket.emit('error', error.message);
-      }
-    });
-    
     // Quick match - find an available game or create a new one
     socket.on('findGame', (data: { playerName: string, color: string }, callback) => {
       try {
@@ -140,10 +131,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
     
-    // Disconnect handling
     // Change player direction
     socket.on('changeDirection', (data: { direction: 'left' | 'right' | 'none' }) => {
       try {
+        console.log(`Player ${socket.id} changing direction to: ${data.direction}`);
         gameManager.changePlayerDirection(socket.id, data.direction);
       } catch (error: any) {
         console.error('Error changing direction:', error.message);

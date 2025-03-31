@@ -115,6 +115,15 @@ const useGameStore = create<GameStoreState>((set, get) => ({
         set({ winner: data.playerId });
       });
       
+      // Add debug listener for directionChanged events
+      socketInstance.on('directionChanged', (data: { direction: string, success: boolean, error?: string }) => {
+        if (data.success) {
+          console.log(`Direction change confirmed by server: ${data.direction}`);
+        } else {
+          console.error(`Direction change failed: ${data.error || 'Unknown error'}`);
+        }
+      });
+      
       // Set the socket at the end after all event listeners are attached
       set({ socket: socketInstance });
     } catch (error) {
@@ -171,10 +180,37 @@ const useGameStore = create<GameStoreState>((set, get) => ({
   
   // Player actions
   updatePlayerDirection: (direction) => {
-    const { socket, localPlayer } = get();
-    if (socket && localPlayer) {
-      // Send direction to server
+    const { socket, localPlayer, gameState } = get();
+    console.log(`updatePlayerDirection called with: ${direction}`);
+    console.log(`Current state - Socket: ${!!socket}, localPlayer: ${!!localPlayer}, gameState: ${gameState}`);
+    
+    if (!socket) {
+      console.error('Cannot update player direction: Socket not connected');
+      return;
+    }
+    
+    if (!localPlayer) {
+      console.error('Cannot update player direction: Local player not available');
+      return;
+    }
+    
+    // Relaxed check to allow direction changes in countdown state too
+    if (gameState !== 'playing' && gameState !== 'countdown') {
+      console.log(`Game not in playing/countdown state (current: ${gameState}), direction change ignored`);
+      return;
+    }
+    
+    // Everything is good, send direction to server
+    console.log(`Emitting changeDirection event with direction: ${direction}`);
+    try {
       socket.emit('changeDirection', { direction });
+      console.log('✅ changeDirection event sent successfully');
+      
+      // Log socket.id for debugging
+      console.log(`Current socket ID: ${socket.id}`);
+      console.log(`Current player ID: ${localPlayer.id}`);
+    } catch (error) {
+      console.error('❌ Failed to emit changeDirection event:', error);
     }
   },
   

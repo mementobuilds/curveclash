@@ -10,8 +10,57 @@ import "@fontsource/inter";
 import "./index.css";
 
 function App() {
-  const { gameState, initializeSocket, socket } = useGameStore();
+  const { 
+    gameState, 
+    initializeSocket, 
+    socket, 
+    localPlayer, 
+    updatePlayerDirection 
+  } = useGameStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // Global keyboard event handlers
+  useEffect(() => {
+    if (!socket || !localPlayer || gameState !== 'playing') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      console.log('App.tsx - Global key down:', e.key);
+      
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        console.log('App.tsx - Setting direction to LEFT');
+        updatePlayerDirection('left');
+        // Direct socket emission as backup
+        socket.emit('changeDirection', { direction: 'left' });
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        console.log('App.tsx - Setting direction to RIGHT');
+        updatePlayerDirection('right');
+        // Direct socket emission as backup
+        socket.emit('changeDirection', { direction: 'right' });
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      console.log('App.tsx - Global key up:', e.key);
+      
+      if (
+        (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') ||
+        (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D')
+      ) {
+        console.log('App.tsx - Setting direction to NONE');
+        updatePlayerDirection('none');
+        // Direct socket emission as backup
+        socket.emit('changeDirection', { direction: 'none' });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [socket, localPlayer, gameState, updatePlayerDirection]);
 
   useEffect(() => {
     // Initialize the socket connection
@@ -30,7 +79,7 @@ function App() {
     // We don't need to cleanup the socket here
     // The socket will be managed by the store
     return () => {};
-  }, []);
+  }, [initializeSocket]);
 
   if (isLoading) {
     return (
