@@ -2,31 +2,39 @@ import { useState, useEffect } from 'react';
 import useGameStore from '../lib/stores/useGameStore';
 import { useIsMobile } from "../hooks/use-is-mobile";
 
+// Typings for global controls manager
+interface GlobalControlsManager {
+  handleTouchDirection(direction: 'left' | 'right' | 'none'): void;
+}
+
+declare global {
+  interface Window {
+    controlsManager: GlobalControlsManager;
+  }
+}
+
 const MobileControls = () => {
-  const { localPlayer, socket, gameState, updatePlayerDirection } = useGameStore();
+  const { gameState } = useGameStore();
   const isMobile = useIsMobile();
   const [activeDirection, setActiveDirection] = useState<'left' | 'right' | 'none'>('none');
 
-  // Handle direction changes
+  // Handle mobile touch events using the global controls manager
   const handleDirectionChange = (direction: 'left' | 'right' | 'none') => {
-    if (!socket || !localPlayer) {
-      console.log('Cannot change direction: socket or localPlayer not available');
-      return;
-    }
-    
-    console.log(`MobileControls: Sending direction change: ${direction}`);
+    // Update UI state
     setActiveDirection(direction);
     
-    // Send through store
-    updatePlayerDirection(direction);
-    
-    // Also send the direction directly via socket as a backup
-    socket.emit('changeDirection', { direction });
+    // Forward to the global controls manager
+    if (window.controlsManager) {
+      console.log(`MobileControls: Forwarding touch direction: ${direction}`);
+      window.controlsManager.handleTouchDirection(direction);
+    } else {
+      console.error('MobileControls: Global controls manager not available');
+    }
   };
   
-  // Add whole screen touch controls as a fallback
+  // Handle full-screen touch events
   useEffect(() => {
-    if (!socket || !localPlayer || gameState !== 'playing' || !isMobile) return;
+    if (!isMobile || gameState !== 'playing') return;
     
     // Touch handler for the entire screen
     const handleTouchStart = (event: TouchEvent) => {
@@ -53,15 +61,16 @@ const MobileControls = () => {
       handleDirectionChange('none');
     };
     
-    // Add global touch handlers
+    // Add touch handlers with passive:false to allow preventDefault
     document.addEventListener('touchstart', handleTouchStart, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
     
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
+      console.log('MobileControls: Touch handlers removed');
     };
-  }, [socket, localPlayer, gameState, isMobile]);
+  }, [gameState, isMobile]);
   
   // If not mobile or game is not playing, don't show the controls
   if (!isMobile || gameState !== 'playing') {
