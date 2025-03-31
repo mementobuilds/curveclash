@@ -15,19 +15,21 @@ function App() {
   useEffect(() => {
     // Initialize the socket connection
     const initSocket = async () => {
-      await initializeSocket();
-      setIsLoading(false);
+      try {
+        await initializeSocket();
+      } catch (error) {
+        console.error("Failed to initialize socket:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     initSocket();
 
-    // Cleanup on unmount
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
-  }, [initializeSocket, socket]);
+    // We don't need to cleanup the socket here
+    // The socket will be managed by the store
+    return () => {};
+  }, []);
 
   if (isLoading) {
     return (

@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import { Player, Point, GameState } from "../game/types";
 
+// Singleton socket instance to avoid recreating on each store access
+let socketInstance: Socket | null = null;
+
 interface GameStoreState {
   // Game state
   gameState: GameState;
@@ -57,25 +60,37 @@ const useGameStore = create<GameStoreState>((set, get) => ({
   
   // Initialize socket connection
   initializeSocket: async () => {
+    // If the socket is already initialized in the store, return
+    const { socket } = get();
+    if (socket !== null) {
+      return; // Socket already exists in the store
+    }
+    
+    // If we have a singleton socket instance, use that
+    if (socketInstance !== null) {
+      set({ socket: socketInstance });
+      return;
+    }
+    
     // Connect to the socket server
     // Using dynamic host based on current origin
     const host = window.location.hostname;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const port = 5000; // Port that's forwarded
     
     try {
-      const socket = io(`${window.location.protocol}//${host}:${port}`);
+      // Create new socket instance
+      socketInstance = io(`${window.location.protocol}//${host}:${port}`);
       
       // Setup socket event listeners
-      socket.on('connect', () => {
+      socketInstance.on('connect', () => {
         console.log('Connected to server');
       });
       
-      socket.on('disconnect', () => {
+      socketInstance.on('disconnect', () => {
         console.log('Disconnected from server');
       });
       
-      socket.on('players', (players: Player[]) => {
+      socketInstance.on('players', (players: Player[]) => {
         const { localPlayer } = get();
         set({ players });
         
@@ -88,22 +103,23 @@ const useGameStore = create<GameStoreState>((set, get) => ({
         }
       });
       
-      socket.on('gameState', (data: { state: GameState, gameId?: string }) => {
+      socketInstance.on('gameState', (data: { state: GameState, gameId?: string }) => {
         set({ gameState: data.state });
         if (data.gameId) {
           set({ gameId: data.gameId });
         }
       });
       
-      socket.on('roundWinner', (data: { playerId: string }) => {
+      socketInstance.on('roundWinner', (data: { playerId: string }) => {
         set({ roundWinner: data.playerId });
       });
       
-      socket.on('gameWinner', (data: { playerId: string }) => {
+      socketInstance.on('gameWinner', (data: { playerId: string }) => {
         set({ winner: data.playerId });
       });
       
-      set({ socket });
+      // Set the socket at the end after all event listeners are attached
+      set({ socket: socketInstance });
     } catch (error) {
       console.error('Failed to connect to socket server:', error);
       throw error;
