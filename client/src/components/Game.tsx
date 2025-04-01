@@ -75,9 +75,9 @@ const Game = () => {
   };
   
   return (
-    <div className="flex flex-col h-screen w-full p-2 md:p-4">
+    <div className="flex flex-col min-h-screen w-full p-2 md:p-4 pb-4 md:pb-8">
       <div className="flex justify-between items-center mb-2 md:mb-4">
-        <h1 className="text-xl md:text-2xl font-bold text-white">Achtung die Kurve</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-white">Curve Clash</h1>
         <Button 
           onClick={handleBackToLobby}
           variant="outline"

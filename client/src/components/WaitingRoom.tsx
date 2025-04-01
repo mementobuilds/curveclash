@@ -48,8 +48,8 @@ const WaitingRoom = () => {
   
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold text-center mb-4">Waiting for Players</h2>
+      <div className="bg-gray-800 p-4 md:p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+        <h2 className="text-2xl font-bold text-center mb-4">Curve Clash - Waiting Room</h2>
         
         {gameId && (
           <div className="mb-6">
@@ -67,7 +67,7 @@ const WaitingRoom = () => {
               </Button>
             </div>
             <p className="text-xs text-center text-gray-500">
-              Or send them this link: <span className="text-blue-400">{shareUrl}</span>
+              Or share this link: <span className="text-blue-400 break-all">{shareUrl}</span>
             </p>
           </div>
         )}
