@@ -34,15 +34,12 @@ export class GameManager {
   /**
    * Create a new game
    */
-  createGame(socketId: string, playerName: string, color: string): { gameId: string; playerId: string } {
-    // Generate a unique game ID (shorter for easier sharing)
+  createGame(socketId: string, playerName: string, color: string, profilePicture?: string, displayName?: string): { gameId: string; playerId: string } {
     const gameId = nanoid(6);
     
-    // Create player manager for this game
     const playerManager = new PlayerManager();
     
-    // Add the player
-    const playerId = playerManager.addPlayer(socketId, playerName, color);
+    const playerId = playerManager.addPlayer(socketId, playerName, color, profilePicture, displayName);
     
     // Create the game
     this.games.set(gameId, {
@@ -67,20 +64,17 @@ export class GameManager {
   /**
    * Join an existing game
    */
-  joinGame(socketId: string, gameId: string, playerName: string, color: string): { gameId: string; playerId: string } {
-    // Check if the game exists
+  joinGame(socketId: string, gameId: string, playerName: string, color: string, profilePicture?: string, displayName?: string): { gameId: string; playerId: string } {
     const game = this.games.get(gameId);
     if (!game) {
       throw new Error(`Game ${gameId} not found`);
     }
     
-    // Check if the game is joinable
     if (game.state !== "waiting") {
       throw new Error("Cannot join a game that has already started");
     }
     
-    // Add the player
-    const playerId = game.playerManager.addPlayer(socketId, playerName, color);
+    const playerId = game.playerManager.addPlayer(socketId, playerName, color, profilePicture, displayName);
     
     // Update the game players
     game.players = game.playerManager.getPlayers();

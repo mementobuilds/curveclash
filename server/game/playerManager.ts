@@ -19,11 +19,9 @@ export class PlayerManager {
   /**
    * Add a new player
    */
-  addPlayer(socketId: string, name: string, color: string): string {
-    // Generate a unique ID for the player
+  addPlayer(socketId: string, name: string, color: string, profilePicture?: string, displayName?: string): string {
     const playerId = nanoid();
     
-    // Create the player object
     const player: Player = {
       id: playerId,
       name,
@@ -33,7 +31,9 @@ export class PlayerManager {
       angle: 0,
       score: 0,
       isAlive: true,
-      points: []
+      points: [],
+      profilePicture: profilePicture || "",
+      displayName: displayName || name,
     };
     
     // Add the player to the list

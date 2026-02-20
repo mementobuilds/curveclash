@@ -100,7 +100,19 @@ The application includes a separate `curve-clash` package that can be distribute
 - **Port Configuration**: Flexible port assignment for deployment platforms
 
 ## Changelog
+- February 20, 2026. Integrated Bedrock Passport (Orange ID) authentication with Google and Apple login. Added user profile display (display name + picture) in lobby, waiting room, and scoreboard.
 - June 30, 2025. Initial setup
+
+## Authentication
+- **Provider**: Bedrock Passport (Orange ID) via `@bedrock_org/passport`
+- **Login Methods**: Google, Apple, Email
+- **Required Environment Variables**:
+  - `VITE_TENANT_ID` - Bedrock Passport tenant ID (from https://developer.orangeweb3.com/)
+  - `VITE_SUBSCRIPTION_KEY` - Bedrock Passport API key
+  - `VITE_WALLET_CONNECT_ID` - WalletConnect project ID
+  - `VITE_AUTH_CALLBACK_URL` - Auth callback URL (auto-set to `{origin}/auth/callback`)
+  - `VITE_BASE_URL` - API base URL (set to `https://api.bedrockpassport.com`)
+- **Auth Flow**: User must sign in before accessing the game lobby. After login, display name and profile picture are shown in the lobby, waiting room, and scoreboard.
 
 ## User Preferences
 

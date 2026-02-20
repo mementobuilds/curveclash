@@ -1,15 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
 import MobileControls from "./components/MobileControls";
+import AuthCallback from "./components/AuthCallback";
+import BedrockProvider from "./components/BedrockProvider";
 import useGameStore from "./lib/stores/useGameStore";
 import "@fontsource/inter";
 import "./index.css";
 
-// Class for managing global controls with direct DOM access for optimal performance
 class GlobalControlsManager {
   private socketId: string | null = null;
   private socket: any = null;
@@ -18,31 +17,26 @@ class GlobalControlsManager {
   private keyStates: { [key: string]: boolean } = {};
   
   constructor() {
-    // Attach event listeners directly to document
     document.addEventListener('keydown', this.handleKeyDown);
     document.addEventListener('keyup', this.handleKeyUp);
     console.log('GlobalControlsManager: Initialized and attached event listeners');
   }
   
-  // Public setter for socket
   setSocket(socket: any) {
     this.socket = socket;
     this.socketId = socket?.id || null;
     console.log(`GlobalControlsManager: Socket set, ID: ${this.socketId}`);
   }
   
-  // Public setter for playing state
   setPlaying(playing: boolean) {
     this.playing = playing;
     console.log(`GlobalControlsManager: Playing state set to ${playing}`);
   }
   
-  // Public getter for playing state
   isPlaying(): boolean {
     return this.playing;
   }
   
-  // Public method to send a direction
   sendDirection(direction: 'left' | 'right' | 'none') {
     if (!this.socket) {
       console.error('GlobalControlsManager: Cannot send direction, socket not initialized');
@@ -50,7 +44,6 @@ class GlobalControlsManager {
     }
     
     if (this.currentDirection === direction) {
-      // Avoid duplicate emissions
       return;
     }
     
@@ -58,15 +51,11 @@ class GlobalControlsManager {
     console.log(`GlobalControlsManager: Sending direction: ${direction}`);
     
     try {
-      // Emit the changeDirection event
       console.log(`Socket ID before sending: ${this.socket.id}`);
       this.socket.emit('changeDirection', { direction });
       
-      // Debug information
       console.log(`Direction ${direction} sent successfully to socket ${this.socket.id}`);
       
-      // Also update the game store directly (in case socket fails)
-      // We need to access this via the window since we can't import it directly in a class
       const updateFn = (window as any).updateStoreDirection;
       if (typeof updateFn === 'function') {
         updateFn(direction);
@@ -76,12 +65,9 @@ class GlobalControlsManager {
     }
   }
   
-  // Handle key down events
   private handleKeyDown = (e: KeyboardEvent) => {
-    // Update key state
     this.keyStates[e.key.toLowerCase()] = true;
     
-    // Check if we can process input
     if (!this.socket || !this.playing) {
       console.log(`GlobalControlsManager: Key ${e.key} ignored - socket: ${!!this.socket}, playing: ${this.playing}`);
       return;
@@ -99,12 +85,9 @@ class GlobalControlsManager {
     }
   }
   
-  // Handle key up events
   private handleKeyUp = (e: KeyboardEvent) => {
-    // Update key state
     this.keyStates[e.key.toLowerCase()] = false;
     
-    // Check if we can process input
     if (!this.socket || !this.playing) {
       console.log(`GlobalControlsManager: Key Up ${e.key} ignored - socket: ${!!this.socket}, playing: ${this.playing}`);
       return;
@@ -113,9 +96,7 @@ class GlobalControlsManager {
     const key = e.key.toLowerCase();
     console.log(`GlobalControlsManager: Key up: ${key}`);
     
-    // Only switch to 'none' if both direction keys are up
     if ((key === 'arrowleft' || key === 'a') || (key === 'arrowright' || key === 'd')) {
-      // Check if any direction key is still down
       const leftDown = this.keyStates['arrowleft'] || this.keyStates['a'];
       const rightDown = this.keyStates['arrowright'] || this.keyStates['d'];
       
@@ -123,16 +104,13 @@ class GlobalControlsManager {
         console.log('GlobalControlsManager: All direction keys released, sending NONE');
         this.sendDirection('none');
       } else if (leftDown) {
-        // Left still pressed
         this.sendDirection('left');
       } else if (rightDown) {
-        // Right still pressed
         this.sendDirection('right');
       }
     }
   }
   
-  // Public method for when touch events come in from MobileControls
   handleTouchDirection(direction: 'left' | 'right' | 'none') {
     if (!this.socket || !this.playing) {
       console.log(`GlobalControlsManager: Ignoring touch direction ${direction} - socket: ${!!this.socket}, playing: ${this.playing}`);
@@ -143,7 +121,6 @@ class GlobalControlsManager {
     this.sendDirection(direction);
   }
   
-  // Clean up
   dispose() {
     document.removeEventListener('keydown', this.handleKeyDown);
     document.removeEventListener('keyup', this.handleKeyUp);
@@ -151,21 +128,18 @@ class GlobalControlsManager {
   }
 }
 
-// Singleton instance
 const controlsManager = new GlobalControlsManager();
 
-// TypeScript declarations
 type DirectionType = 'left' | 'right' | 'none';
 
-// Add to window for TypeScript (simpler approach)
 declare global {
   interface Window {
-    controlsManager: any; // Use any to avoid circular reference
+    controlsManager: any;
     updateStoreDirection?: (direction: DirectionType) => void;
   }
 }
 
-function App() {
+function AppInner() {
   const { 
     gameState, 
     initializeSocket, 
@@ -175,16 +149,13 @@ function App() {
   } = useGameStore();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Direct socket handler
   useEffect(() => {
     if (socket) {
       controlsManager.setSocket(socket);
     }
   }, [socket]);
   
-  // Update playing state
   useEffect(() => {
-    // Guard against undefined gameState which can happen during transitions
     if (!gameState) {
       console.log('Skipping controls update - gameState is undefined');
       return;
@@ -193,7 +164,6 @@ function App() {
     const isPlaying = gameState === 'playing' || gameState === 'countdown';
     const canControl = isPlaying && !!localPlayer && !!socket;
     
-    // Set the playing state and log it only once
     if (canControl) {
       console.log(`Controls ENABLED for game state: ${gameState}`);
       controlsManager.setPlaying(true);
@@ -203,25 +173,20 @@ function App() {
     }
   }, [gameState, localPlayer, socket]);
   
-  // Expose functions to the window
   useEffect(() => {
-    // Expose the controls manager for mobile controls to access
     window.controlsManager = controlsManager;
     
-    // Expose a function to update direction through the store
     window.updateStoreDirection = (direction: 'left' | 'right' | 'none') => {
       console.log(`Updating store direction: ${direction}`);
       updatePlayerDirection(direction);
     };
     
     return () => {
-      // Cleanup - use type assertion to handle optional property
       window.updateStoreDirection = undefined;
     };
   }, [updatePlayerDirection]);
 
   useEffect(() => {
-    // Initialize the socket connection
     const initSocket = async () => {
       try {
         await initializeSocket();
@@ -234,8 +199,6 @@ function App() {
 
     initSocket();
 
-    // We don't need to cleanup the socket here
-    // The socket will be managed by the store
     return () => {};
   }, [initializeSocket]);
 
@@ -248,13 +211,22 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex flex-col bg-black text-white">
-        {gameState === "lobby" ? <Lobby /> : <Game />}
-        <MobileControls />
-      </div>
+    <div className="min-h-screen flex flex-col bg-black text-white">
+      {gameState === "lobby" ? <Lobby /> : <Game />}
+      <MobileControls />
       <Toaster position="top-right" />
-    </QueryClientProvider>
+    </div>
+  );
+}
+
+function App() {
+  const params = new URLSearchParams(window.location.search);
+  const isAuthCallback = params.has("token") && params.has("refreshToken");
+
+  return (
+    <BedrockProvider>
+      {isAuthCallback ? <AuthCallback /> : <AppInner />}
+    </BedrockProvider>
   );
 }
 

@@ -146,11 +146,16 @@ const useGameStore = create<GameStoreState>((set, get) => ({
   
   // Game actions
   createGame: async (playerName, color) => {
-    const { socket } = get();
+    const { socket, localPlayer } = get();
     if (!socket) throw new Error("Socket not connected");
     
     return new Promise<void>((resolve, reject) => {
-      socket.emit('createGame', { playerName, color }, (response: { success: boolean, error?: string }) => {
+      socket.emit('createGame', { 
+        playerName, 
+        color, 
+        profilePicture: localPlayer?.profilePicture || "",
+        displayName: localPlayer?.displayName || playerName 
+      }, (response: { success: boolean, error?: string }) => {
         if (response.success) {
           resolve();
         } else {
@@ -161,11 +166,17 @@ const useGameStore = create<GameStoreState>((set, get) => ({
   },
   
   joinGame: async (gameId, playerName, color) => {
-    const { socket } = get();
+    const { socket, localPlayer } = get();
     if (!socket) throw new Error("Socket not connected");
     
     return new Promise<void>((resolve, reject) => {
-      socket.emit('joinGame', { gameId, playerName, color }, (response: { success: boolean, error?: string }) => {
+      socket.emit('joinGame', { 
+        gameId, 
+        playerName, 
+        color,
+        profilePicture: localPlayer?.profilePicture || "",
+        displayName: localPlayer?.displayName || playerName
+      }, (response: { success: boolean, error?: string }) => {
         if (response.success) {
           resolve();
         } else {

@@ -76,12 +76,23 @@ const WaitingRoom = () => {
           <h3 className="text-lg font-semibold mb-2">Players:</h3>
           <div className="bg-gray-900 rounded p-2 max-h-40 overflow-y-auto">
             {players.map((player) => (
-              <div key={player.id} className="flex items-center mb-1 last:mb-0">
-                <div 
-                  className="w-4 h-4 rounded-full mr-2" 
-                  style={{ backgroundColor: player.color }}
-                />
-                <span>{player.name}</span>
+              <div key={player.id} className="flex items-center mb-2 last:mb-0">
+                {player.profilePicture ? (
+                  <img 
+                    src={player.profilePicture} 
+                    alt={player.displayName || player.name} 
+                    className="w-8 h-8 rounded-full object-cover mr-2 border-2"
+                    style={{ borderColor: player.color }}
+                  />
+                ) : (
+                  <div 
+                    className="w-8 h-8 rounded-full mr-2 flex items-center justify-center text-xs font-bold border-2"
+                    style={{ backgroundColor: player.color, borderColor: player.color }}
+                  >
+                    {(player.displayName || player.name || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm">{player.displayName || player.name}</span>
               </div>
             ))}
           </div>

@@ -30,9 +30,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Client connected: ${socket.id}`);
     
     // Create a new game
-    socket.on('createGame', (data: { playerName: string, color: string }, callback) => {
+    socket.on('createGame', (data: { playerName: string, color: string, profilePicture?: string, displayName?: string }, callback) => {
       try {
-        const { gameId, playerId } = gameManager.createGame(socket.id, data.playerName, data.color);
+        const { gameId, playerId } = gameManager.createGame(socket.id, data.playerName, data.color, data.profilePicture, data.displayName);
         
         // Join the socket to the game room
         socket.join(gameId);
@@ -54,9 +54,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     // Join an existing game
-    socket.on('joinGame', (data: { gameId: string, playerName: string, color: string }, callback) => {
+    socket.on('joinGame', (data: { gameId: string, playerName: string, color: string, profilePicture?: string, displayName?: string }, callback) => {
       try {
-        const { gameId, playerId } = gameManager.joinGame(socket.id, data.gameId, data.playerName, data.color);
+        const { gameId, playerId } = gameManager.joinGame(socket.id, data.gameId, data.playerName, data.color, data.profilePicture, data.displayName);
         
         // Join the socket to the game room
         socket.join(gameId);
@@ -88,16 +88,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     // Quick match - find an available game or create a new one
-    socket.on('findGame', (data: { playerName: string, color: string }, callback) => {
+    socket.on('findGame', (data: { playerName: string, color: string, profilePicture?: string, displayName?: string }, callback) => {
       try {
-        // Get all active games with room for more players
         const availableGames = gameManager.getActiveGames()
           .filter(game => game.playerCount < 6 && game.state === 'waiting');
         
         if (availableGames.length > 0) {
-          // Join the first available game
           const gameToJoin = availableGames[0];
-          const { gameId, playerId } = gameManager.joinGame(socket.id, gameToJoin.id, data.playerName, data.color);
+          const { gameId, playerId } = gameManager.joinGame(socket.id, gameToJoin.id, data.playerName, data.color, data.profilePicture, data.displayName);
           
           // Join the socket to the game room
           socket.join(gameId);

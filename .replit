@@ -45,3 +45,5 @@ waitForPort = 5000
 [userenv.shared]
 ORANGE_TENANT_CODE = "orange-xxxxxxx"
 ORANGE_PURCHASE_URL = "https://app.orangeweb3.com/projects/YOUR_PROJECT"
+VITE_BASE_URL = "https://api.bedrockpassport.com"
+VITE_DEFAULT_CHAIN_ID = "1"

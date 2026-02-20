@@ -15,6 +15,8 @@ export interface Player {
   score: number;
   isAlive: boolean;
   points: Point[];
+  profilePicture?: string;
+  displayName?: string;
 }
 
 // Game state types

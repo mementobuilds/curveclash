@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
+import { useBedrockPassport, LoginPanel } from "@bedrock_org/passport";
+import "@bedrock_org/passport/dist/style.css";
 import useGameStore from "../lib/stores/useGameStore";
+import useAuthStore from "../lib/stores/useAuthStore";
 import { PLAYER_COLORS } from "../lib/game/constants";
 
 const Lobby = () => {
@@ -13,6 +16,9 @@ const Lobby = () => {
     joinGame,
     createGame
   } = useGameStore();
+
+  const { isLoggedIn, user, signOut } = useBedrockPassport();
+  const { user: authUser, setUser, logout: authLogout } = useAuthStore();
   
   const [playerName, setPlayerName] = useState("");
   const [selectedColor, setSelectedColor] = useState(PLAYER_COLORS[0]);
@@ -21,7 +27,23 @@ const Lobby = () => {
   const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [availableColors, setAvailableColors] = useState<string[]>(PLAYER_COLORS);
 
-  // Update available colors based on already selected colors
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      const bedrockUser = user as any;
+      setUser({
+        id: bedrockUser.id || "",
+        email: bedrockUser.email || "",
+        name: bedrockUser.name || "",
+        displayName: bedrockUser.displayName || bedrockUser.name || "",
+        picture: bedrockUser.picture || "",
+        provider: bedrockUser.provider || "",
+      });
+      if (!playerName) {
+        setPlayerName(bedrockUser.displayName || bedrockUser.name || "");
+      }
+    }
+  }, [isLoggedIn, user]);
+
   useEffect(() => {
     if (players.length > 0) {
       const usedColors = players.map(p => p.color);
@@ -31,7 +53,6 @@ const Lobby = () => {
     }
   }, [players]);
 
-  // Handle socket events
   useEffect(() => {
     if (!socket) return;
     
@@ -62,6 +83,35 @@ const Lobby = () => {
     };
   }, [socket, setGameState]);
 
+  const handleLogout = async () => {
+    try {
+      const accessToken =
+        localStorage.getItem("bedrock:accessToken") ||
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("bedrock:accessToken");
+      if (accessToken) {
+        await fetch("https://api.bedrockpassport.com/api/v1/auth/logout", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      }
+    } catch {
+    }
+
+    await signOut();
+    authLogout();
+
+    try {
+      localStorage.removeItem("bedrock:accessToken");
+      localStorage.removeItem("bedrock:refreshToken");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("passport-token");
+      sessionStorage.removeItem("bedrock:accessToken");
+      sessionStorage.removeItem("bedrock:refreshToken");
+    } catch {}
+  };
+
   const handleCreateGame = async () => {
     if (!playerName.trim()) {
       toast.error("Please enter a player name");
@@ -71,7 +121,6 @@ const Lobby = () => {
     setIsCreatingGame(true);
     
     try {
-      // Set local player information
       setLocalPlayer({
         id: '',
         name: playerName,
@@ -81,10 +130,11 @@ const Lobby = () => {
         angle: 0,
         score: 0,
         isAlive: true,
-        points: []
+        points: [],
+        profilePicture: authUser?.picture || "",
+        displayName: authUser?.displayName || playerName,
       });
       
-      // Create game on server
       await createGame(playerName, selectedColor);
     } catch (error) {
       toast.error("Failed to create game");
@@ -106,7 +156,6 @@ const Lobby = () => {
     setIsJoiningGame(true);
     
     try {
-      // Set local player information
       setLocalPlayer({
         id: '',
         name: playerName,
@@ -116,10 +165,11 @@ const Lobby = () => {
         angle: 0,
         score: 0,
         isAlive: true,
-        points: []
+        points: [],
+        profilePicture: authUser?.picture || "",
+        displayName: authUser?.displayName || playerName,
       });
       
-      // Join game on server
       await joinGame(gameId, playerName, selectedColor);
     } catch (error) {
       toast.error("Failed to join game");
@@ -127,11 +177,73 @@ const Lobby = () => {
     }
   };
 
+  if (!isLoggedIn) {
+    return (
+      <div className="flex items-center justify-center min-h-screen py-8">
+        <div className="max-w-md w-full mx-4">
+          <h1 className="text-3xl font-bold text-center mb-6">Curve Clash</h1>
+          <LoginPanel
+            title="Sign in to"
+            logo="https://irp.cdn-website.com/e81c109a/dms3rep/multi/orange-web3-logo-v2a-20241018.svg"
+            logoAlt="Orange Web3"
+            walletButtonText="Connect Wallet"
+            showConnectWallet={false}
+            separatorText="OR"
+            features={{
+              enableWalletConnect: false,
+              enableAppleLogin: true,
+              enableGoogleLogin: true,
+              enableEmailLogin: true,
+            }}
+            titleClass="text-xl font-bold"
+            logoClass="ml-2 md:h-8 h-6"
+            panelClass="container p-2 md:p-8 rounded-2xl max-w-[480px] bg-gray-800"
+            buttonClass="hover:border-orange-500"
+            separatorTextClass="bg-gray-800 text-gray-500"
+            separatorClass="bg-gray-700"
+            linkRowClass="justify-center"
+            headerClass="justify-center"
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen py-8">
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
-        <h1 className="text-3xl font-bold text-center mb-6">Curve Clash</h1>
+        <h1 className="text-3xl font-bold text-center mb-4">Curve Clash</h1>
         
+        {authUser && (
+          <div className="flex items-center justify-between mb-6 bg-gray-700 rounded-lg p-3">
+            <div className="flex items-center gap-3">
+              {authUser.picture ? (
+                <img 
+                  src={authUser.picture} 
+                  alt={authUser.displayName} 
+                  className="w-10 h-10 rounded-full object-cover border-2 border-purple-500"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold">
+                  {(authUser.displayName || authUser.name || "?").charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="font-semibold text-sm">{authUser.displayName || authUser.name}</p>
+                <p className="text-xs text-gray-400">{authUser.email}</p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleLogout}
+              className="text-xs bg-transparent border-gray-600 hover:bg-gray-600"
+            >
+              Sign Out
+            </Button>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Your Name</label>
@@ -168,7 +280,6 @@ const Lobby = () => {
           <div className="border-t border-gray-700 my-4"></div>
           
           <div className="space-y-4">
-            {/* Quick Match as primary option */}
             <Button
               onClick={() => {
                 if (!playerName.trim()) {
@@ -176,7 +287,6 @@ const Lobby = () => {
                   return;
                 }
                 
-                // Set local player
                 setLocalPlayer({
                   id: '',
                   name: playerName,
@@ -186,16 +296,16 @@ const Lobby = () => {
                   angle: 0,
                   score: 0,
                   isAlive: true,
-                  points: []
+                  points: [],
+                  profilePicture: authUser?.picture || "",
+                  displayName: authUser?.displayName || playerName,
                 });
                 
-                // Auto-join the first available game
-                socket?.emit('findGame', { playerName, color: selectedColor }, (response: { success: boolean, gameId?: string, error?: string }) => {
+                socket?.emit('findGame', { playerName, color: selectedColor, profilePicture: authUser?.picture || "", displayName: authUser?.displayName || playerName }, (response: { success: boolean, gameId?: string, error?: string }) => {
                   if (response.success && response.gameId) {
                     toast.success(`Joined game ${response.gameId}`);
                     setGameState("waiting");
                   } else {
-                    // If no games available, create a new one
                     handleCreateGame();
                   }
                 });

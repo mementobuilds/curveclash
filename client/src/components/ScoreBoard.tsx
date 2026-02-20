@@ -3,7 +3,6 @@ import useGameStore from "../lib/stores/useGameStore";
 const ScoreBoard = () => {
   const { players, localPlayer } = useGameStore();
   
-  // Sort players by score
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
   return (
@@ -22,15 +21,26 @@ const ScoreBoard = () => {
               }`}
             >
               <div className="flex items-center">
-                <div 
-                  className="w-4 h-4 rounded-full mr-2" 
-                  style={{ backgroundColor: player.color }}
-                />
+                {player.profilePicture ? (
+                  <img 
+                    src={player.profilePicture} 
+                    alt={player.displayName || player.name} 
+                    className="w-6 h-6 rounded-full object-cover mr-2 border"
+                    style={{ borderColor: player.color }}
+                  />
+                ) : (
+                  <div 
+                    className="w-6 h-6 rounded-full mr-2 flex items-center justify-center text-[10px] font-bold"
+                    style={{ backgroundColor: player.color }}
+                  >
+                    {(player.displayName || player.name || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span className={`
                   ${player.isAlive ? '' : 'line-through text-gray-400'} 
                   ${player.id === localPlayer?.id ? 'font-bold' : ''}
                 `}>
-                  {player.name}
+                  {player.displayName || player.name}
                   {player.id === localPlayer?.id ? ' (You)' : ''}
                 </span>
               </div>
