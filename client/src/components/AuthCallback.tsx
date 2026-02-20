@@ -12,11 +12,9 @@ export default function AuthCallback() {
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem(
           "passport-token",
-          JSON.stringify({
-            state: { accessToken: token, refreshToken },
-          })
+          JSON.stringify({ state: { accessToken: token, refreshToken } })
         );
-        window.location.href = window.location.origin + "/";
+        window.location.href = "/";
       }
     };
 
@@ -29,9 +27,5 @@ export default function AuthCallback() {
     }
   }, [loginCallback]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="text-2xl">Signing in...</div>
-    </div>
-  );
+  return <div>Signing in...</div>;
 }
