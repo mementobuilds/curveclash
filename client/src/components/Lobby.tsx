@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { useBedrockPassport, LoginPanel } from "@bedrock_org/passport";
-import "@bedrock_org/passport/dist/style.css";
 import useGameStore from "../lib/stores/useGameStore";
 import useAuthStore from "../lib/stores/useAuthStore";
 import { PLAYER_COLORS } from "../lib/game/constants";
@@ -20,13 +19,15 @@ const Lobby = () => {
   const { isLoggedIn, user, signOut } = useBedrockPassport();
   const { user: authUser, setUser, logout: authLogout } = useAuthStore();
   
+  const urlGameId = new URLSearchParams(window.location.search).get("game") || "";
   const [playerName, setPlayerName] = useState("");
   const [selectedColor, setSelectedColor] = useState(PLAYER_COLORS[0]);
-  const [gameId, setGameId] = useState("");
+  const [gameId, setGameId] = useState(urlGameId);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [availableColors, setAvailableColors] = useState<string[]>(PLAYER_COLORS);
   const userSyncedRef = useRef(false);
+  const autoJoinedRef = useRef(false);
 
   useEffect(() => {
     if (isLoggedIn && user && !userSyncedRef.current) {
@@ -48,6 +49,47 @@ const Lobby = () => {
       userSyncedRef.current = false;
     }
   }, [isLoggedIn, user]);
+
+  useEffect(() => {
+    if (!urlGameId || !socket || !isLoggedIn || autoJoinedRef.current) return;
+    if (!userSyncedRef.current || !user) return;
+
+    autoJoinedRef.current = true;
+    const u = user as any;
+    const name = u.displayName || u.name || "Player";
+    const color = selectedColor;
+    const pic = u.picture || u.photoUrl || "";
+    const dName = u.displayName || u.name || name;
+
+    setPlayerName(name);
+    setLocalPlayer({
+      id: '',
+      name,
+      color,
+      x: 0, y: 0, angle: 0, score: 0,
+      isAlive: true,
+      points: [],
+      profilePicture: pic,
+      displayName: dName,
+    });
+
+    socket.emit('joinGame', {
+      gameId: urlGameId,
+      playerName: name,
+      color,
+      profilePicture: pic,
+      displayName: dName,
+    }, (response: { success: boolean, error?: string }) => {
+      if (response.success) {
+        toast.success(`Joined game ${urlGameId}`);
+        setGameState("waiting");
+        window.history.replaceState({}, '', '/');
+      } else {
+        toast.error(response.error || "Game not found");
+        autoJoinedRef.current = false;
+      }
+    });
+  }, [urlGameId, socket, isLoggedIn, user]);
 
   useEffect(() => {
     if (players.length > 0) {
@@ -183,10 +225,13 @@ const Lobby = () => {
   };
 
   if (!isLoggedIn) {
+    if (urlGameId) {
+      localStorage.setItem("pendingGameId", urlGameId);
+    }
     return (
-      <div className="flex items-center justify-center min-h-screen py-8 bg-black overflow-y-auto">
-        <div className="max-w-md w-full mx-4">
-          <h1 className="text-3xl font-bold text-center mb-6 text-white">Curve Clash</h1>
+      <div className="login-panel-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem 0', backgroundColor: '#000', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '480px', width: '100%', margin: '0 1rem' }}>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '1.5rem', color: '#fff' }}>Curve Clash</h1>
           <LoginPanel
             title="Sign in to"
             logo="https://irp.cdn-website.com/e81c109a/dms3rep/multi/orange-web3-logo-v2a-20241018.svg"
@@ -200,12 +245,12 @@ const Lobby = () => {
               enableGoogleLogin: true,
               enableEmailLogin: false,
             }}
-            titleClass="text-xl font-bold"
+            titleClass="text-xl font-bold text-white"
             logoClass="ml-2 md:h-8 h-6"
-            panelClass="container p-2 md:p-8 rounded-2xl max-w-[480px]"
+            panelClass="p-4 md:p-8 rounded-2xl bg-gray-900 text-white"
             buttonClass="hover:border-orange-500"
             separatorTextClass="bg-gray-900 text-gray-500"
-            separatorClass="bg-gray-800"
+            separatorClass="bg-gray-700"
             linkRowClass="justify-center"
             headerClass="justify-center"
           />

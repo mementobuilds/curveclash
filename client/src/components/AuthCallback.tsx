@@ -28,7 +28,13 @@ export default function AuthCallback() {
         } catch (e) {
           console.error("Login callback error:", e);
         }
-        window.location.href = window.location.origin + "/";
+        const pendingGame = localStorage.getItem("pendingGameId");
+        if (pendingGame) {
+          localStorage.removeItem("pendingGameId");
+          window.location.href = window.location.origin + "/?game=" + encodeURIComponent(pendingGame);
+        } else {
+          window.location.href = window.location.origin + "/";
+        }
       };
       login();
     }
