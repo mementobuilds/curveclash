@@ -39,3 +39,9 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+ORANGE_TENANT_CODE = "orange-xxxxxxx"
+ORANGE_PURCHASE_URL = "https://app.orangeweb3.com/projects/YOUR_PROJECT"
