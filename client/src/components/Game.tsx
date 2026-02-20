@@ -8,7 +8,19 @@ import useGameStore from "../lib/stores/useGameStore";
 import { useAudio } from "../lib/stores/useAudio";
 import { Button } from "./ui/button";
 
-const Game = () => {
+interface GameProps {
+  gamePass: {
+    passEnabled: boolean;
+    passValidated: boolean;
+    passTimeRemaining: number;
+    passExpired: boolean;
+    isGuestMode: boolean;
+    formatTime: (seconds: number) => string;
+    handleGetNewPass: () => void;
+  };
+}
+
+const Game = ({ gamePass }: GameProps) => {
   const { 
     gameState, 
     socket, 
@@ -78,13 +90,33 @@ const Game = () => {
     <div className="flex flex-col min-h-screen w-full p-2 md:p-4 pb-4 md:pb-8">
       <div className="flex justify-between items-center mb-2 md:mb-4">
         <h1 className="text-xl md:text-2xl font-bold text-white">Curve Clash</h1>
-        <Button 
-          onClick={handleBackToLobby}
-          variant="outline"
-          className="bg-red-500 text-white hover:bg-red-700 text-sm md:text-base"
-        >
-          Back to Lobby
-        </Button>
+        <div className="flex items-center gap-3">
+          {gamePass.passEnabled && gamePass.passValidated && gamePass.passTimeRemaining > 0 && (
+            <div className="bg-green-900/50 border border-green-700 rounded px-3 py-1 flex items-center gap-2">
+              <span className="text-green-400 text-xs">Pass</span>
+              <span className="text-green-300 font-mono text-sm font-bold">
+                {gamePass.formatTime(gamePass.passTimeRemaining)}
+              </span>
+            </div>
+          )}
+          {gamePass.passEnabled && gamePass.passExpired && (
+            <div className="bg-red-900/50 border border-red-700 rounded px-3 py-1">
+              <span className="text-red-400 text-xs">Pass Expired</span>
+            </div>
+          )}
+          {gamePass.isGuestMode && (
+            <div className="bg-yellow-900/50 border border-yellow-700 rounded px-3 py-1">
+              <span className="text-yellow-400 text-xs">Guest</span>
+            </div>
+          )}
+          <Button 
+            onClick={handleBackToLobby}
+            variant="outline"
+            className="bg-red-500 text-white hover:bg-red-700 text-sm md:text-base"
+          >
+            Back to Lobby
+          </Button>
+        </div>
       </div>
       
       {/* Responsive layout - column on mobile, row on desktop */}

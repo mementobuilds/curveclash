@@ -5,7 +5,9 @@ import Lobby from "./components/Lobby";
 import MobileControls from "./components/MobileControls";
 import AuthCallback from "./components/AuthCallback";
 import BedrockProvider from "./components/BedrockProvider";
+import { GamePassDialogs } from "./components/GamePassDialogs";
 import useGameStore from "./lib/stores/useGameStore";
+import { useGamePass } from "./hooks/useGamePass";
 import "@fontsource/inter";
 import "./index.css";
 
@@ -148,6 +150,7 @@ function AppInner() {
     updatePlayerDirection
   } = useGameStore();
   const [isLoading, setIsLoading] = useState(true);
+  const gamePass = useGamePass();
 
   useEffect(() => {
     if (socket) {
@@ -212,9 +215,21 @@ function AppInner() {
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
-      {gameState === "lobby" ? <Lobby /> : <Game />}
+      {gameState === "lobby" ? <Lobby gamePass={gamePass} /> : <Game gamePass={gamePass} />}
       <MobileControls />
       <Toaster position="top-right" />
+      <GamePassDialogs
+        showPassErrorDialog={gamePass.showPassErrorDialog}
+        showPassExpiredDialog={gamePass.showPassExpiredDialog}
+        showWelcomeDialog={gamePass.showWelcomeDialog}
+        passError={gamePass.passError}
+        isRedeeming={gamePass.isRedeeming}
+        onPlayAsGuest={gamePass.handlePlayAsGuest}
+        onGetNewPass={gamePass.handleGetNewPass}
+        onDismissPassError={gamePass.dismissPassError}
+        onDismissPassExpired={gamePass.dismissPassExpired}
+        onDismissWelcomeDialog={gamePass.dismissWelcomeDialog}
+      />
     </div>
   );
 }

@@ -6,7 +6,26 @@ import useGameStore from "../lib/stores/useGameStore";
 import useAuthStore from "../lib/stores/useAuthStore";
 import { PLAYER_COLORS } from "../lib/game/constants";
 
-const Lobby = () => {
+interface LobbyProps {
+  gamePass: {
+    passEnabled: boolean;
+    togglePassEnabled: (enabled: boolean) => void;
+    isGuestMode: boolean;
+    passToken: string | null;
+    passValidated: boolean;
+    passTimeRemaining: number;
+    passExpired: boolean;
+    isRedeeming: boolean;
+    cameWithPass: boolean;
+    redeemPass: (token: string) => Promise<{ valid: boolean; error?: string; secondsRemaining?: number }>;
+    canStartGame: () => boolean;
+    formatTime: (seconds: number) => string;
+    handlePlayAsGuest: () => void;
+    handleGetNewPass: () => void;
+  };
+}
+
+const Lobby = ({ gamePass }: LobbyProps) => {
   const { 
     socket, 
     players, 
@@ -28,7 +47,6 @@ const Lobby = () => {
   const [availableColors, setAvailableColors] = useState<string[]>(PLAYER_COLORS);
   const userSyncedRef = useRef(false);
   const autoJoinedRef = useRef(false);
-
   useEffect(() => {
     if (isLoggedIn && user && !userSyncedRef.current) {
       userSyncedRef.current = true;
@@ -164,6 +182,11 @@ const Lobby = () => {
       toast.error("Please enter a player name");
       return;
     }
+
+    if (gamePass.passEnabled && !gamePass.canStartGame()) {
+      toast.error("You need a valid Game Pass to start a game");
+      return;
+    }
     
     setIsCreatingGame(true);
     
@@ -199,6 +222,11 @@ const Lobby = () => {
       toast.error("Please enter a game ID");
       return;
     }
+
+    if (gamePass.passEnabled && !gamePass.canStartGame()) {
+      toast.error("You need a valid Game Pass to join a game");
+      return;
+    }
     
     setIsJoiningGame(true);
     
@@ -224,7 +252,7 @@ const Lobby = () => {
     }
   };
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && !gamePass.isGuestMode) {
     if (urlGameId) {
       localStorage.setItem("pendingGameId", urlGameId);
     }
@@ -264,7 +292,7 @@ const Lobby = () => {
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
         <h1 className="text-3xl font-bold text-center mb-4">Curve Clash</h1>
         
-        {authUser && (
+        {authUser && !gamePass.isGuestMode && (
           <div className="flex items-center justify-between mb-6 bg-gray-700 rounded-lg p-3">
             <div className="flex items-center gap-3">
               {authUser.picture ? (
@@ -291,6 +319,52 @@ const Lobby = () => {
             >
               Sign Out
             </Button>
+          </div>
+        )}
+
+        {gamePass.isGuestMode && (
+          <div className="mb-4 bg-yellow-900/30 border border-yellow-700 rounded-lg p-3 text-center">
+            <p className="text-yellow-300 text-sm font-medium">Playing as Guest</p>
+            <p className="text-yellow-400/70 text-xs mt-1">Scores won't be saved to leaderboard</p>
+          </div>
+        )}
+
+        {gamePass.passEnabled && gamePass.passValidated && gamePass.passTimeRemaining > 0 && (
+          <div className="mb-4 bg-green-900/30 border border-green-700 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-green-300 text-sm font-medium">Game Pass Active</span>
+            <span className="text-green-400 font-mono text-lg font-bold">
+              {gamePass.formatTime(gamePass.passTimeRemaining)}
+            </span>
+          </div>
+        )}
+
+        {gamePass.passEnabled && !gamePass.isGuestMode && !gamePass.isRedeeming && !gamePass.canStartGame() && (
+          <div className={`mb-4 ${gamePass.passExpired ? 'bg-red-900/30 border-red-700' : 'bg-orange-900/30 border-orange-700'} border rounded-lg p-3 text-center`}>
+            <p className={`${gamePass.passExpired ? 'text-red-300' : 'text-orange-300'} text-sm font-medium`}>
+              {gamePass.passExpired ? "Game Pass Expired" : "No active Game Pass"}
+            </p>
+            <div className="flex gap-2 mt-2 justify-center">
+              <Button
+                size="sm"
+                onClick={gamePass.handlePlayAsGuest}
+                className="bg-gray-600 hover:bg-gray-700 text-xs"
+              >
+                Play as Guest
+              </Button>
+              <Button
+                size="sm"
+                onClick={gamePass.handleGetNewPass}
+                className="bg-orange-600 hover:bg-orange-700 text-xs"
+              >
+                Get New Pass
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {gamePass.isRedeeming && (
+          <div className="mb-4 bg-blue-900/30 border border-blue-700 rounded-lg p-3 text-center">
+            <p className="text-blue-300 text-sm font-medium">Validating Game Pass...</p>
           </div>
         )}
 
@@ -336,6 +410,11 @@ const Lobby = () => {
                   toast.error("Please enter a player name");
                   return;
                 }
+
+                if (gamePass.passEnabled && !gamePass.canStartGame()) {
+                  toast.error("You need a valid Game Pass to play");
+                  return;
+                }
                 
                 setLocalPlayer({
                   id: '',
@@ -360,7 +439,7 @@ const Lobby = () => {
                   }
                 });
               }}
-              disabled={!playerName}
+              disabled={!playerName || (gamePass.passEnabled && !gamePass.canStartGame())}
               className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-3"
             >
               Quick Match
@@ -371,7 +450,7 @@ const Lobby = () => {
             <div className="border-t border-gray-700 my-2 pt-2">
               <Button
                 onClick={handleCreateGame}
-                disabled={isCreatingGame || !playerName}
+                disabled={isCreatingGame || !playerName || (gamePass.passEnabled && !gamePass.canStartGame())}
                 className="w-full bg-green-600 hover:bg-green-700 mt-2"
               >
                 {isCreatingGame ? "Creating..." : "Create New Game"}
@@ -393,11 +472,28 @@ const Lobby = () => {
             
             <Button
               onClick={handleJoinGame}
-              disabled={isJoiningGame || !playerName || !gameId}
+              disabled={isJoiningGame || !playerName || !gameId || (gamePass.passEnabled && !gamePass.canStartGame())}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {isJoiningGame ? "Joining..." : "Join Game"}
             </Button>
+          </div>
+
+          <div className="border-t border-gray-700 my-4"></div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-gray-400">Game Pass Mode</label>
+            <button
+              onClick={() => gamePass.togglePassEnabled(!gamePass.passEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                gamePass.passEnabled ? 'bg-orange-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  gamePass.passEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
       </div>

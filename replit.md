@@ -100,8 +100,25 @@ The application includes a separate `curve-clash` package that can be distribute
 - **Port Configuration**: Flexible port assignment for deployment platforms
 
 ## Changelog
+- February 20, 2026. Integrated Orange Game Pass system with token redemption, countdown timer, guest mode, and toggle on/off support.
 - February 20, 2026. Integrated Bedrock Passport (Orange ID) authentication with Google and Apple login. Added user profile display (display name + picture) in lobby, waiting room, and scoreboard.
 - June 30, 2025. Initial setup
+
+## Orange Game Pass
+- **Hook**: `client/src/hooks/useGamePass.ts` - Handles token capture, redemption, status checks, timer countdown
+- **Dialogs**: `client/src/components/GamePassDialogs.tsx` - Invalid pass, expired pass, welcome dialogs
+- **API Base**: `https://app.orangeweb3.com/api/games/passes`
+- **Required Environment Variables**:
+  - `VITE_ORANGE_TENANT_CODE` - Orange tenant code (format: orange-xxxxxxx)
+  - `VITE_ORANGE_PURCHASE_URL` - URL where users can purchase a Game Pass
+- **Features**:
+  - Toggle to enable/disable Game Pass mode in lobby
+  - Token captured from `?pass_token=xxx` URL parameter
+  - Pass validated via POST /redeem API
+  - Countdown timer shown in lobby and during gameplay
+  - Guest mode allows free play without leaderboard
+  - Game doesn't end when timer expires, but prevents starting new games
+  - Dialogs for invalid pass, expired pass, and welcome (no pass)
 
 ## Authentication
 - **Provider**: Bedrock Passport (Orange ID) via `@bedrock_org/passport`
