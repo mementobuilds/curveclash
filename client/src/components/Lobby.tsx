@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { useBedrockPassport } from "@bedrock_org/passport";
@@ -25,21 +25,26 @@ const Lobby = () => {
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [availableColors, setAvailableColors] = useState<string[]>(PLAYER_COLORS);
+  const userSyncedRef = useRef(false);
 
   useEffect(() => {
-    if (isLoggedIn && user) {
+    if (isLoggedIn && user && !userSyncedRef.current) {
+      userSyncedRef.current = true;
       const bedrockUser = user as any;
       setUser({
         id: bedrockUser.id || "",
         email: bedrockUser.email || "",
         name: bedrockUser.name || "",
         displayName: bedrockUser.displayName || bedrockUser.name || "",
-        picture: bedrockUser.picture || "",
+        picture: bedrockUser.picture || bedrockUser.photoUrl || "",
         provider: bedrockUser.provider || "",
       });
       if (!playerName) {
         setPlayerName(bedrockUser.displayName || bedrockUser.name || "");
       }
+    }
+    if (!isLoggedIn) {
+      userSyncedRef.current = false;
     }
   }, [isLoggedIn, user]);
 
