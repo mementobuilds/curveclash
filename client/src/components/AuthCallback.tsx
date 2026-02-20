@@ -1,31 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useBedrockPassport } from "@bedrock_org/passport";
 
 export default function AuthCallback() {
   const { loginCallback } = useBedrockPassport();
+  const calledRef = useRef(false);
 
   useEffect(() => {
-    const login = async (token: string, refreshToken: string) => {
-      const success = await loginCallback(token, refreshToken);
-      if (success) {
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem(
-          "passport-token",
-          JSON.stringify({ state: { accessToken: token, refreshToken } })
-        );
-        window.location.href = "/";
-      }
-    };
+    if (calledRef.current) return;
 
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const refreshToken = params.get("refreshToken");
 
     if (token && refreshToken) {
-      login(token, refreshToken);
+      calledRef.current = true;
+      const login = async () => {
+        try {
+          const success = await loginCallback(token, refreshToken);
+          if (success) {
+            localStorage.setItem("accessToken", token);
+            localStorage.setItem("refreshToken", refreshToken);
+            localStorage.setItem(
+              "passport-token",
+              JSON.stringify({ state: { accessToken: token, refreshToken } })
+            );
+          }
+        } catch (e) {
+          console.error("Login callback error:", e);
+        }
+        window.location.href = window.location.origin + "/";
+      };
+      login();
     }
-  }, [loginCallback]);
+  }, []);
 
-  return <div>Signing in...</div>;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="text-2xl">Signing in...</div>
+    </div>
+  );
 }
